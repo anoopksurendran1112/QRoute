@@ -1,4 +1,4 @@
-# QR-Based Indoor Navigation System
+# QRoute (QR-Based Indoor Navigation System)
 
 ## What This Is
 

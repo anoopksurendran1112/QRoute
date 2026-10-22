@@ -1,4 +1,4 @@
-# Requirements: QR-Based Indoor Navigation System
+# Requirements: QRoute (QR-Based Indoor Navigation System)
 
 ## v1 Requirements
 
