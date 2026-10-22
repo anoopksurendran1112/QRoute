@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+**/android/.gradle/
+**/android/local.properties
+**/ios/Pods/
+**/ios/Flutter/ephemeral/
+*.iml
+
+# Uploads and generated artefacts (floor plans, QR images)
+server/storage/uploads/*
+!server/storage/uploads/.gitkeep
+server/storage/qr/*
+!server/storage/qr/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test output
+coverage/
+.nyc_output/

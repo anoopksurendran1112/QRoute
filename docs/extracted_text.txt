@@ -1,0 +1,437 @@
+============================== synopsis.pdf pages: 9
+--- page 1 ---
+    St. Joseph’s College of Engineering and Technology, Palai                           
+                    Department of Computer Applications 
+                               24SJMCA245 – Mini Project 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                     QR based navigation app 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Date of Submission: 17 / 07 / 2026 
+Submitted By: Guided By: 
+Student Name: Deepak Jose Thomas 
+Reg No.:  SJC25MCA - 2025 
+Roll No.: 25 
+Batch: 2025-2027 
+Name of Guide: Prof.Neethu Paulose 
+Designation: Assistant Professor 
+Department: MCA 
+--- page 2 ---
+                                         SYNOPSIS 
+Module:1. Introduction 
+Educational institutions are expanding rapidly with multiple academic blocks, 
+laboratories, libraries, seminar halls, administrative offices, and classrooms spread 
+across different buildings and floors. As the campus infrastructure becomes more 
+complex, students, faculty members, parents, and visitors often face difficulties 
+locating classrooms and departments. This problem becomes more significant during 
+admission periods, examinations, seminars, workshops, and orientation programs 
+when thousands of new students and visitors enter the campus without prior 
+knowledge of the building layout. 
+Traditional navigation methods such as printed maps, notice boards, and signboards 
+are often insufficient because they provide only static information and require users 
+to interpret directions manually. These methods become ineffective in large 
+campuses where multiple buildings have similar layouts or where classrooms are 
+frequently relocated due to timetable changes. As a result, users waste valuable time 
+searching for destinations, leading to confusion, stress, and delays. 
+The proposed QR Code Based Classroom Navigation System  addresses these 
+challenges by integrating QR code technology with digital indoor navigation. QR codes 
+are strategically placed at different locations such as building entrances, corridors, 
+staircases, elevators, and junctions. When a user scans a QR code using the mobile 
+application, the system automatically identifies the user's current position. The user 
+then selects the desired classroom or department, and the application calculates the 
+shortest and most efficient path using graph -based pathfinding algo rithms such as 
+Dijkstra's Algorithm or A* Search Algorithm. 
+The application provides real -time visual navigation with directional guidance, 
+interactive floor maps, estimated walking distance, and step-by-step instructions until 
+the destination is reached. The system eliminates dependence on manual directions 
+while improving navigation efficiency throughout the campus. 
+Furthermore, the application includes an administrative module through which 
+campus administrators can update classroom locations, building l ayouts, QR code 
+mappings, and navigation paths without affecting user accessibility. The system is 
+designed to be scalable, allowing future integration with GPS -assisted outdoor 
+navigation, attendance management, timetable synchronization, emergency 
+evacuation guidance, and accessibility features for differently-abled users. 
+ 
+Module:2. Problem Statement 
+Students, faculty members, and visitors frequently experience difficulty locating 
+classrooms and other facilities within large educational campuses. Existing navigation 
+methods rely on signboards, printed maps, or verbal assistance, which are often 
+--- page 3 ---
+inaccurate, outdated, or insufficient. These methods increase travel time, reduce 
+operational efficiency, and create inconvenience, particularly for first -time visitors 
+and newly admitted students. 
+There is a need for an intelligent indoor navigation system capable of identifying the 
+user's current location and providing optimized, real-time navigation to the selected 
+classroom using QR code technology. 
+ 
+Module:3. Objectives 
+Primary Objective 
+To develop a QR Code Based Classroom Navigation System that enables users to 
+locate classrooms accurately and efficiently through digital indoor navigation. 
+Specific Objectives 
+ Develop a secure user authentication system.  
+ Implement QR code scanning for location identification.  
+ Provide interactive digital maps of campus buildings.  
+ Calculate the shortest navigation path.  
+ Display step-by-step navigation instructions.  
+ Maintain updated classroom and building information.  
+ Provide administrative control for campus management.  
+ Reduce the time required to locate classrooms.  
+ Improve campus accessibility for visitors and new students.  
+ Create a scalable system for future smart campus applications.  
+ 
+Module:4. Scope of the Project 
+The proposed system is designed primarily for educational institutions including 
+colleges, universities, technical institutes, and research centers. 
+The application can be utilized by: 
+ Students  
+ Faculty members  
+ Administrative staff  
+ Parents  
+ Visitors  
+ Examination candidates  
+--- page 4 ---
+ Event participants  
+The system supports: 
+ Indoor navigation  
+ Classroom search  
+ Department search  
+ Floor-wise navigation  
+ QR-based location detection  
+ Interactive campus maps  
+ Route optimization  
+ Administrative map management  
+Future versions may include: 
+ Voice-assisted navigation  
+ AI-powered route optimization  
+ Accessibility support  
+ Emergency evacuation routing  
+ Attendance integration  
+ Timetable synchronization  
+ Event-based navigation  
+ Visitor management  
+ Parking navigation  
+ 
+Module:5. Existing System 
+Currently, most colleges depend on conventional navigation techniques. 
+These include: 
+ Printed campus maps  
+ Direction signboards  
+ Manual guidance from staff  
+ Classroom notice boards  
+ Department inquiry counters  
+Limitations 
+ Static information  
+ No real-time navigation  
+--- page 5 ---
+ Time-consuming  
+ Confusing for new students  
+ Difficult to update  
+ No shortest path calculation  
+ No digital guidance  
+ Limited accessibility  
+ 
+Module:6. Proposed System 
+The proposed QR Code Based Classroom Navigation System introduces a smart indoor 
+navigation solution that combines QR code technology, digital maps, and shortest -
+path algorithms. 
+Users simply scan a QR code available at their current location. The application 
+determines their position and displays the optimal route to the selected destination. 
+The navigation process includes: 
+ Location identification  
+ Destination selection  
+ Route calculation  
+ Interactive map visualization  
+ Step-by-step guidance  
+ Destination notification  
+The administrator manages all classroom information, maps, QR codes, and 
+navigation routes through an integrated admin panel. 
+ 
+ Module:7 
+1. User Authentication Module 
+This module manages user registration, login, authentication, password 
+management, and profile information while ensuring secure access to the system. 
+ 
+2. QR Code Scanning Module 
+Responsible for scanning QR codes placed throughout the campus. 
+Functions include: 
+ QR recognition  
+ Current location detection  
+--- page 6 ---
+ Data decoding  
+ Location verification  
+ Navigation initialization  
+ 
+3. Classroom Search Module 
+Allows users to search classrooms using: 
+ Room number  
+ Faculty name  
+ Department  
+ Building  
+ Floor  
+Displays classroom information and destination details. 
+ 
+4. Indoor Map Module 
+Displays interactive digital floor maps. 
+Functions include: 
+ Building visualization  
+ Floor switching  
+ Zoom controls  
+ Current location display  
+ Destination highlighting  
+ 
+5. Path Finding Module 
+Calculates the shortest route using graph traversal algorithms. 
+Algorithms: 
+ Dijkstra Algorithm  
+ A* Search Algorithm  
+Factors considered: 
+ Distance  
+ Connectivity  
+ Accessibility  
+ Floor transitions  
+--- page 7 ---
+ 
+6. Navigation Guidance Module 
+Provides navigation instructions through: 
+ Direction arrows  
+ Walking path  
+ Turn indicators  
+ Destination alerts  
+ Progress tracking  
+ 
+7. Database Management Module 
+Stores: 
+ User information  
+ QR code data  
+ Classroom information  
+ Building layouts  
+ Navigation paths  
+ Floor maps  
+ Administrative records  
+ 
+8. Admin Module 
+Allows administrators to: 
+ Add classrooms  
+ Modify classroom details  
+ Generate QR codes  
+ Upload maps  
+ Update navigation routes  
+ Monitor application usage  
+ Maintain system database  
+ 
+8. Technologies Used 
+Frontend: 
+ Flutter  
+--- page 8 ---
+ Dart  
+ HTML  
+ CSS  
+ JavaScript  
+ React Native (optional)  
+Backend: 
+ Node.js  
+ Express.js  
+ Django  
+ Spring Boot  
+Database: 
+ MySQL  
+ Firebase Firestore  
+QR Code Technology: 
+ ZXing Library  
+ Flutter QR Scanner  
+ Google ML Kit Barcode Scanner  
+Navigation Technologies: 
+ Google Maps SDK  
+ Indoor Mapping APIs  
+ Dijkstra Algorithm  
+ A* Algorithm  
+Development Environment: 
+ Android Studio  
+ Visual Studio Code  
+ Git  
+ GitHub  
+ 
+9. Hardware Requirements 
+Client Side: 
+ Android Smartphone  
+ Camera  
+--- page 9 ---
+ Minimum 4 GB RAM  
+ Internet Connection  
+Server Side: 
+ Intel Core i5 Processor or above  
+ 8 GB RAM  
+ 500 GB Storage  
+ Cloud or Local Server  
+ 
+10. Software Requirements 
+ Android Studio  
+ Flutter SDK  
+ Dart SDK  
+ Node.js  
+ MySQL  
+ Firebase  
+ Visual Studio Code  
+ GitHub  
+ Windows 10/11 or Linux  
+ 
+11. Expected Outcomes 
+The proposed system is expected to: 
+ Reduce navigation time within the campus.  
+ Improve user experience through digital guidance.  
+ Minimize confusion during examinations and admissions.  
+ Provide accurate classroom location services.  
+ Enhance campus management through centralized administration.  
+ Increase operational efficiency.  
+ Support future smart campus initiatives. 
+ 
+============================== QR code based app.pdf pages: 4
+--- page 1 ---
+    St. Joseph’s College of Engineering and Technology, Palai                           
+                    Department of Computer Applications 
+                               24SJMCA245 – Mini Project 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                     QR based navigation app 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Date of Submission: 08 / 07 / 2026 
+Submitted By: Guided By: 
+Student Name: Deepak Jose Thomas 
+Reg No.:  SJC25MCA - 2025 
+Roll No.: 25 
+Batch: 2025-2027 
+Name of Guide: Prof.Neethu Paulose 
+Designation: Assistant Professor 
+Department: MCA 
+--- page 2 ---
+                                         ABSTRACT 
+The QR Code Based Classroom Navigation App is a smart indoor navigation system 
+designed to help students, faculty, and visitors locate classrooms easily within a 
+college or university campus. The application works by scanning a QR code placed at 
+different locations inside the campus. Once the QR code is scanned, the app identifies 
+the user's current location and displays a digital map showing the shortest route to 
+the selected classroom. It als o provides step -by-step navigation with directional 
+guidance, reducing confusion and saving time. The system is especially useful for new 
+students, visitors, and during examinations when finding classrooms quickly is 
+essential. The application offers a use r-friendly interface, real-time navigation, and 
+accurate location tracking within the campus. 
+ 
+Modules 
+1. User Authentication Module 
+ User registration and login.  
+ Secure authentication using email or student ID.  
+ Stores user profiles and preferences.  
+2. QR Code Scanning Module 
+ Scans QR codes placed at various campus locations.  
+ Detects the user's current position.  
+ Sends location data to the navigation system.  
+3. Classroom Search Module 
+ Allows users to search classrooms by room number, department, or faculty.  
+ Displays classroom details and availability.  
+ Provides destination selection.  
+4. Indoor Map Module 
+ Displays the building layout and floor maps.  
+ Highlights the user's current location.  
+ Supports zooming and interactive navigation.  
+5. Path Finding and Navigation Module 
+ Calculates the shortest and most efficient route.  
+ Uses pathfinding algorithms such as Dijkstra's or A*.  
+ Provides turn -by-turn directions (e.g., "Go straight," "Turn left," "Take the 
+stairs").  
+--- page 3 ---
+6. Direction Guidance Module 
+ Gives visual directional indicators using arrows.  
+ Updates navigation based on the user's movement.  
+ Alerts users when they reach their destination.  
+7. Database Management Module 
+ Stores classroom information, QR code locations, maps, and user data.  
+ Maintains building layouts and navigation paths.  
+ Ensures quick retrieval of navigation information.  
+8. Admin Module 
+ Manages classroom details and building maps.  
+ Generates and updates QR codes.  
+ Adds, edits, or removes classrooms and routes.  
+ Monitors application usage and maintenance.  
+ 
+Technologies Used 
+Frontend 
+ Flutter (Dart) or React Native  
+ HTML, CSS, JavaScript (for web version)  
+Backend 
+ Node.js with Express.js / Django / Spring Boot  
+Database 
+ MySQL  
+ Firebase Firestore (optional for real-time updates)  
+QR Code Integration 
+ ZXing (Zebra Crossing)  
+ ML Kit Barcode Scanner  
+ Flutter QR Scanner Package  
+Maps and Navigation 
+ Google Maps SDK  
+ Indoor Map APIs  
+ A* or Dijkstra's Algorithm for shortest path calculation  
+Development Tools 
+--- page 4 ---
+ Android Studio  
+ Visual Studio Code  
+ Git & GitHub  
+ 
+Key Features 
+ QR code-based indoor navigation.  
+ Interactive digital campus map.  
+ Classroom search by room number or department.  
+ Shortest route calculation.  
+ Step-by-step directional guidance.  
+ Easy-to-use interface.  
+ Admin panel for updating maps and classroom information.  
+ Fast and accurate classroom location assistance. 
+ 
