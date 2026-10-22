@@ -1,0 +1,360 @@
+# Feature Research
+
+**Domain:** Indoor campus navigation / QR-code wayfinding (mobile app + web admin panel + API)
+**Researched:** 2026-10-22
+**Confidence:** MEDIUM
+**Project:** QR-Based Indoor Navigation System (MCA mini project, St. Joseph's College of Engineering and Technology, Palai)
+
+---
+
+## Reading This Document
+
+Feature categories map directly to the three-bucket template:
+
+| Bucket | Meaning | Consequence for roadmap |
+|--------|---------|-------------------------|
+| **Table Stakes** | Users assume it exists. Missing it = the product feels broken or is not credible. | Must be in v1. A phase that skips one is not done. |
+| **Differentiator** | Sets the project apart, or proves the engineering depth the report needs. | Pick 3–5. Each one must earn its cost. |
+| **Anti-Feature** | Looks attractive, creates real problems, expands scope past what one student can ship. | Documented so nobody proposes it later. |
+
+**Every feature carries a `Module` tag** so requirements can be traced back to the eight fixed synopsis modules. `M1`–`M8` are the synopsis modules; `ADD` marks a feature that is not in the synopsis but is required by the committed design decisions in `PROJECT.md` (or is a cheap, high-leverage addition).
+
+**Synopsis module key**
+
+| Tag | Synopsis module |
+|-----|-----------------|
+| M1 | User Authentication (register, login, roles user/admin) |
+| M2 | QR Code Scanning (scan, decode, locate, verify) |
+| M3 | Classroom Search (by room number, department, faculty, building, floor) |
+| M4 | Indoor Map (floor switching, zoom, current location, destination highlight) |
+| M5 | Path Finding (Dijkstra + A*, distance, connectivity, accessibility, floor transitions) |
+| M6 | Navigation Guidance (direction arrows, turn indicators, destination alerts, progress tracking) |
+| M7 | Database Management |
+| M8 | Admin Module (add/edit classrooms, generate QR codes, upload maps, update routes, monitor usage) |
+
+**Complexity / effort legend** (one student, part-time, alongside coursework)
+
+| Complexity | Rough student-days | Meaning |
+|-----------|-------------------|---------|
+| LOW | 1–3 | CRUD screen, endpoint, or pure function. No unknowns. |
+| MEDIUM | 4–8 | Cross-layer work: schema + API + client, or a non-trivial UI canvas. |
+| HIGH | 9–15+ | Novel territory, performance-sensitive, or easy to get half-right. |
+
+Total v1 budget is approximately **55–75 student-days**. The table below totals ~52 for table stakes plus ~22 for differentiators — so a v1 with a *small* differentiator set and deliberate deferrals is the only shape that fits. This is the single most important conclusion of this research.
+
+---
+
+## Feature Landscape
+
+### Table Stakes (Users Expect These)
+
+Features users assume exist. Missing these = product feels incomplete.
+
+| # | Feature | Module | Why Expected | Complexity | Effort | Notes |
+|---|---------|--------|--------------|-----------|--------|-------|
+| TS1 | **Scan-to-locate**: scanning a QR code identifies the user's current position | M2 | The entire premise. ExpoFP (Aug 2026) and Navigine (Dec 2024) both describe the flow as: scan → map opens with that point as origin. Without it there is no product. | LOW | 2–3 d | `mobile_scanner` (ML Kit) — not the deprecated `qr_code_scanner`. Decode opaque signed token → resolve to node → set origin. |
+| TS2 | **Destination search** across room number, department, faculty, building, floor | M3 | Every indoor navigation product leads with a searchable room directory (Mappedin Mar 2026; MazeMap Jul 2026; Navigine). Users expect to type a room number and get one answer. | MEDIUM | 5–7 d | One search endpoint, one debounced Flutter search field with filter chips. Field-specific search over `classrooms` joined to `buildings`/`floors`/`departments`/`faculty`. |
+| TS3 | **Interactive multi-floor map**: floor switching, pinch-zoom, pan, current-position marker | M4 | Baseline in all six surveyed products. Zapworks calls the underlying model a "navigation mesh"; Mappedin/MazeMap/Pointr all render an interactive map as the primary surface. | HIGH | 9–12 d | Flutter `CustomPainter` over the floor-plan PNG. No Google Maps SDK (PROJECT.md decision). Pan/zoom transform matrix, floor selector, destination highlight, origin marker. |
+| TS4 | **Route rendered on the map** (polyline over the plan, destination highlighted, origin highlighted) | M4 + M5 | "Turn-by-turn on a map" is what users mean by indoor navigation (Mappedin Mar 2026). A route you can only read as text feels broken. | MEDIUM | 4–6 d | Server returns ordered node ids with per-floor pixel coordinates; client splits the polyline into per-floor segments and draws them on the active floor. |
+| TS5 | **Turn-by-turn instruction list** — distance to next manoeuvre, turn indicator, and a reference landmark | M6 | Standard indoor instruction grammar: *distance + direction + landmark*. Marciniak et al. (MDPI Appl. Sci. 14(22):10252, 2024) confirms indoor guidance is generated by grouping same-floor nodes into legs and classifying bearing changes — exactly the pure-function design planned here. | MEDIUM | 4–6 d | Pure function over the returned path: same-floor legs → bearing change → left / right / straight / slight / u-turn. Unit-testable, and it feeds the report. |
+| TS6 | **Floor transition handling** — stairs vs lift, with an explicit instruction | M5 + M6 | Zapworks: an indoor route "must account for multiple floors connected by stairs, lifts, or ramps". MazeMap: "37 metres, then turn left" is the expected granularity. A route that silently jumps floors is a dead end for the user. | MEDIUM | 4–5 d | `edges.kind ∈ {walk, stair, lift}`. Cross-floor edges link a node on floor A to a node on floor B. Instruction text names the transition ("take the stairs to Floor 2", "take the lift to Floor 3"). |
+| TS7 | **Distance and ETA in real units** (metres, walking minutes) | M5 | Users expect a distance readout. Navigine, MazeMap and Pointr all surface distance. But this only works if edge cost is in metres, not pixels. | MEDIUM | 3–4 d | Depends on TS12 (scale calibration). ETA from a configurable walking speed (~1.3 m/s) plus a per-edge time penalty for stairs/lift wait. |
+| TS8 | **Step-free / accessible routing** as a selectable mode | M5 | Mappedin (Mar 2026) and MazeMap (Jul 2026) both call step-free routing a baseline institutional requirement, not a feature. MazeMap: universities are "legally obligated" to provide accessible wayfinding. An accessible route that does not exist is worse than none — it sends someone confidently toward a barrier (Ariadne, Jul 2026). | MEDIUM | 4–6 d | `edges.accessible` flag. Accessible mode filters out `stair` edges, prefers `lift`. Must be a **first-class routing mode** (constraint on the search), not a filter applied to a shortest-path result (Ariadne). |
+| TS9 | **Admin floor-plan upload + node/edge graph editor** over the image | M8 | *The* credibility feature. Fast Routing Graph Extraction from Floor Plans (2018) notes raster floor plans are simple to obtain but perform poorly for routing — a separate navigation graph is required. Lund University student paper: "creation of a navigation graph is done by hand by placing individual nodes and connecting them using edges." Every commercial platform (Mappedin Map Editor, MazeMap Map Editor) ships exactly this editor. Without it, every map change is a manual database edit. | HIGH | 12–15 d | Canvas editor in the React admin panel: upload PNG → place nodes (click) → connect edges (click, click) → set kind/accessible → save. Snap to nearest existing node optional. This is the biggest single line item in the project and must not be allowed to sprawl. |
+| TS10 | **Per-floor scale calibration** (`meters_per_pixel`) with an admin calibration step | M8 + M5 | Mappedin's 9-step map guide requires geo-referencing floor-plan measurements to real-world dimensions; an LLM-floorplan-parsing paper (arXiv 2512.12177) confirms a scale factor converts floorplan measurements into real-world dimensions for distance estimation. Without it, TS7's distance and ETA are fiction. | MEDIUM | 3–4 d | Admin draws a line over a known-length reference (corridor width, door span) and enters its real length → app stores `meters_per_pixel` per floor. Edge costs then derive from pixel length × scale. |
+| TS11 | **QR code generation, download and printable sheet** for graph nodes | M8 | Vendor parity: 3D Wayfinder's admin panel offers per-location QR download; WayfindingPro documents QR codes on signs and placards at elevators and lobbies. The admin must be able to produce the physical artefact that makes the whole system work. | MEDIUM | 3–4 d | Server-side QR generation for a node or a whole floor as a printable PDF/PNG sheet, with the sign label (node name, building, floor). Includes the signed token format so codes are unforgeable. |
+| TS12 | **Admin CRUD** for buildings, floors, classrooms, departments, faculty + classroom → entrance-node binding | M8 | Mappedin's stated requirement: a room change must be publishable "in minutes, not weeks". Every content change on a real campus is a room change. Without the binding, a classroom has no position and cannot be a route destination. | MEDIUM | 5–7 d | `classrooms.entrance_node_id` is the join that makes the domain model work. CRUD screens in the React admin panel. |
+| TS13 | **Authentication with user/admin roles** | M1 | Fixed by the synopsis. Users expect to log in and have their role remembered; admins must not be reachable by normal users. | LOW | 2–3 d | Local JWT, `users.role ∈ {user, admin}`. No Firebase (PROJECT.md decision). |
+| TS14 | **Usage monitoring** — scan events, session counts, popular destinations, per-QR health | M8 + M7 | Mappedin and MazeMap both treat "one spatial layer serving visitor experience *and* operations" as a purchase criterion. Pointr and Navigine sell footfall/analytics as a first-class product. A campus wants to know which QR codes get used and which rooms are never found. | MEDIUM | 4–6 d | `nav_sessions` + `scan_events` tables, an admin dashboard with counts per building/room/QR, and a "stale code" view (codes never scanned in N days). |
+| TS15 | **Offline degradation** — cached graph + cached floor images + cached route computation | M2 + M5 | ExpoFP's comparison table (Aug 2026): QR wayfinding works offline once the map is cached; BLE is only partially offline; Wi-Fi/UWB needs a live connection. Indoor dead zones are the normal case, not the exception (PROJECT.md constraint). | MEDIUM | 4–6 d | Client caches the graph and floor images after first successful sync. Route computation runs on-device against the cached graph when the server is unreachable. Degrade, never fail. |
+| TS16 | **Seeded synthetic campus** so the system is demonstrable without manual setup | M7 + M8 | A demo with no data is not a demo. PROJECT.md requires a seeded synthetic campus; real SJCET floor-plan digitisation is explicitly optional and non-blocking. | MEDIUM | 3–5 d | Seed script producing ~3 buildings, ~8 floors, ~120 classrooms, ~400 nodes, ~500 edges, complete with faculty and departments, plus matching QR tokens. |
+
+**Table-stakes subtotal:** ~16 features, ~52 student-days. This is the floor, not the target.
+
+---
+
+### Differentiators (Competitive Advantage)
+
+Features that set the product apart. Not required, but valuable. Each one must earn its place — this project cannot afford a long differentiator list.
+
+| # | Feature | Module | Value Proposition | Complexity | Effort | Notes |
+|---|---------|--------|--------------------|-----------|--------|-------|
+| D1 | **Signed, opaque QR tokens** (`SJCETNAV:v1:<nodeId>.<hmac8>`) with offline tamper rejection and server-side token→node mapping | M2 | Node ids are unguessable, so a scanned code cannot be spoofed into a fake location. The server keeps the mapping, so a code can be **retired without reprinting** — essential on a campus where codes get peeled, moved or vandalised. No surveyed vendor exposes this as a productised feature; it is a genuine, demonstrable engineering property and a strong viva question. | MEDIUM | 3–4 d | HMAC truncated to 8 hex chars, verified on-device against a shared secret before any network call, then re-validated server-side. Token table: `token_hash → node_id → active`. |
+| D2 | **Server-side pathfinding running BOTH Dijkstra and A\*, with an algorithm-comparison report** | M5 | PROJECT.md commits to this. It is also the cheapest possible way to produce quantitative evidence for the report (nodes expanded, path length, runtime, agreement rate on random pairs). Makes the report defensible instead of narrative. | MEDIUM | 4–5 d | Both algorithms are ~100 lines. Pure functions, trivially unit-tested. A `compare` endpoint or CLI flag returns both results side by side. |
+| D3 | **Metre-accurate scale calibration** — `meters_per_pixel` per floor, derived by drawing a line of known real length | M8 + M5 | Commercial platforms get real-world dimensions from CAD/BIM. A project working from PNGs must prove it can recover metric accuracy another way. This is the feature that makes "distance" and "ETA" honest rather than decorative. | MEDIUM | 3–4 d | (Complements TS10; the differentiator is the *calibration UX inside the graph editor*, not the stored field.) A short "drag a line across the main corridor, enter 24 m" wizard. |
+| D4 | **Checkpoint-progress guidance** — explicit "walk to the next QR checkpoint and scan to confirm", with progress along the route | M6 | The honest, distinctive model. Zapworks contrasts it directly with continuous positioning: VPS "can say continue straight for 20 metres, then turn left", whereas a QR system can only say "walk to the next code and scan". Owning that framing — and making the checkpoint sequence a first-class object in the UI — turns the project's biggest limitation into its clearest design idea. | MEDIUM | 4–6 d | Route response includes the ordered list of checkpoint nodes (the QR-relevant nodes on the path). Guidance screen shows "Checkpoint 2 of 5 — 18 m, turn left at the stairwell" and the next code to look for. |
+| D5 | **Graph validator / linter** in the admin panel | M8 | Cheap, high-leverage, and impressive in a viva. Catches the exact failure modes that make a hand-authored graph useless: classrooms with no entrance node, nodes with no edges, floors with no connection to any other floor, disconnected components, edges with zero or absurd cost, cycles with no bidirectional flag, QR tokens pointing at retired nodes. | LOW | 2–3 d | A `GET /api/admin/graph/validate` endpoint plus a panel listing problems by severity. Genuinely useful to the project itself while the seeded campus is being built. |
+| D6 | **Search by faculty / department, not just by room** | M3 | Competitor directories are room- and POI-oriented. "Where is Prof. X?" is a *real* campus question that Google-style indoor maps answer badly. Resolving a person → their room → the room's entrance node → a route is a genuine differentiator for a campus product, and it is already in the synopsis (M3). | LOW | 2–3 d | Needs a `faculty → room` relation (already in the proposed domain model). Search returns people and rooms in one list with type chips. |
+| D7 | **Accessibility-first route explanation** — name the lift used, and say so plainly when no step-free route exists | M5 + M6 | Ariadne (Jul 2026) names this as the standard most systems fail: "a route that claims to be accessible and then presents a step is worse than no route at all". Systems should also "tell the visitor honestly when the only accessible route is significantly longer". Cheap to implement, distinctly better than competitors. | LOW | 1–2 d | In accessible mode, name the specific lift. If the search finds no step-free path, say so explicitly rather than silently returning a stairs route. |
+| D8 | **Offline route computation on-device** against the cached graph | M5 + M2 | Turns the offline requirement from "degraded" into "equally capable". Because the whole route algorithm is a pure function over a small graph, porting Dijkstra to Dart is genuinely cheap — and it is the strongest possible answer to the "indoor dead zone" objection. | MEDIUM | 4–5 d | Requires the graph to be a plain serialisable structure (no server-only assumptions) and the A*/Dijkstra implementation to be shared in spirit across TS/JS and Dart. |
+| D9 | **Two admin surfaces**: full web CMS + minimal in-app admin | M8 | PROJECT.md decision. The graph editor is far cheaper and more pleasant in a browser; phone-side quick edits (mark a room out of service, fix a typo) are wanted on the floor. | MEDIUM | 4–6 d | Keep the in-app admin to *reads and simple edits only* (toggle room status, rename, add a note). The graph editor is web-only. Do not duplicate the editor. |
+| D10 | **Seeded synthetic campus as a shareable artefact** — a demo dataset with a real graph | M7 | Vendors cannot show you their campus. A complete, believable synthetic campus (with named buildings, faculty, departments and a coherent floor plan) is the demo, the test fixture and the seed for the graph validator all at once. | MEDIUM | 3–4 d | Overlaps TS16; the differentiator is the *quality and legibility* of the seed, not its existence. Include at least one building where the shortest route uses a lift and a second where stairs are shorter — so the accessibility mode visibly changes the result. |
+
+**Differentiator subtotal:** ~10 candidates, ~30–35 student-days. **Pick 4–6, not 10.** Recommended v1 set: **D1, D2, D3, D4, D5, D7** (~18–24 d). Defer D6, D8, D9 (partially), D10 (quality polish) to v1.x.
+
+---
+
+### Anti-Features (Commonly Requested, Often Problematic)
+
+Features that seem good but create problems. Each row names what to do instead.
+
+| # | Anti-Feature | Why Requested | Why Problematic | Alternative |
+|---|-------------|---------------|----------------|-------------|
+| AF1 | **Continuous real-time position tracking / live "blue dot"** | Every commercial indoor navigation product advertises it; Mappedin's campus guide makes "beacon-free positioning that delivers reliable blue-dot positioning" a headline differentiator. It feels like the mark of a serious product. | **It cannot be built on QR localisation, and claiming it would be dishonest.** The Zapworks guide classifies QR/NFC as "point-fix only"; ExpoFP (Aug 2026) is explicit: "unlike real-time indoor positioning, QR-code wayfinding does not continuously track an attendee as they move. Instead, each scan establishes a known starting location." BLE gives 1–3 m, Wi-Fi/UWB 1–3 m, but only with hardware and weeks of setup; indoor GPS degrades to 30–100 m. Over-claiming continuous tracking is the single highest exam risk in this project (PROJECT.md decision) — a reviewer who knows the domain will ask "how do you know the user is *between* checkpoints?" and there is no honest answer. | **Checkpoint navigation, stated plainly.** Guidance = "walk to the next QR checkpoint and scan to confirm progress" (D4). Position is known at scan instants; the UI says so. Add compass + accelerometer dead reckoning as an explicitly-labelled *optional enhancement*, never as a baseline promise. |
+| AF2 | **AR camera-overlay navigation** (arrows composited onto the live camera feed) | The most visually impressive demo in the category; Zapworks and 3D Wayfinder both ship it. | AR guidance is only meaningful with continuous positioning — without it you cannot anchor an arrow to the corridor ahead, so it collapses back into a 2D map with extra steps. It needs a real camera pipeline, adds battery and performance cost, and Zapworks itself warns that asking people to walk while looking at a phone is a safety issue in busy narrow corridors. | 2D map + direction arrow + high-contrast next-step card (TS3, TS5). Visually distinct, honest, and buildable in the time available. |
+| AF3 | **3D digital twin / photorealistic 3D maps** | Concept3D and MazeMap both sell it; it looks impressive on a projector. | High build and maintenance cost, higher device requirements, and "can be overwhelming in dense environments" (Zapworks). A 2–3 floor campus gains almost nothing from photorealism. It would consume the entire project budget. | 2D `CustomPainter` over the floor-plan PNG (TS3). Spend the saved effort on the graph editor, which is where the actual difficulty lives. |
+| AF4 | **BLE beacons / UWB / Wi-Fi positioning hardware** | It is the "real" way to get a blue dot, and every competitor page leads with it. | Per-anchor hardware cost and battery maintenance; setup measured in days to weeks vs hours for QR; accuracy still only 1–3 m; needs an app and often a live connection. Already ruled out in PROJECT.md. | QR checkpoints (TS1). If the examiner asks "why not beacons", the answer is on record in the report with citations. |
+| AF5 | **Room booking, timetable sync, live occupancy** | Mappedin and MazeMap list these as standard campus integrations and they sound like the "complete" product. | Each is a separate integration project against an external system (Google/Outlook Calendar, or sensors). PROJECT.md already places them out of scope. A static status flag covers the user need at a fraction of the cost. | A simple `status` field on a classroom (available / occupied / out of service) plus an optional note. |
+| AF6 | **Google Maps SDK / commercial indoor mapping API** | It is the obvious default and would save building a renderer. | Cannot render a custom corridor graph, requires an API key and billing, and would make the routing engine somebody else's problem — which is the entire academic content of the project. | Custom map renderer (PROJECT.md decision). The graph, the calibration and the routing are the deliverable. |
+| AF7 | **AI / LLM auto-tracing of floor plans into a graph** | It sounds like the feature that removes the need for the graph editor, and arXiv 2512.12177 shows it is being researched. | Unverifiable output, a large research project in itself, and it removes the very component the brief names as the credibility feature (TS9). It would also make the project impossible to explain. | The human graph editor (TS9), assisted by auto-computed edge lengths from pixel distance × scale — deterministic, explainable, and already built. |
+| AF8 | **Kiosk mode, embeddable web map widget, multi-language UI (40+ languages)** | Vendors treat app-free delivery and localisation as baseline; Zapworks notes ~46% of app installs are uninstalled within 30 days. | Each adds a delivery surface and a translation pipeline. The Flutter app is a fixed requirement of the synopsis. 40 languages is a content problem, not a code problem, and it is infinite. | One mobile app. If wanted later: a "share route as a link" feature, and English plus one additional language at most. |
+| AF9 | **Push notifications, geofencing, background location** | They sound like the "smart" features of a modern nav app. | All three presuppose continuous location tracking (AF1), cost battery, and add a privacy surface that a campus app does not need. | Arrival alerts in-app, triggered by a scan that confirms arrival at the destination checkpoint. |
+| AF10 | **Reporting dashboards, heatmaps, occupancy analytics** | Mappedin, Pointr and Navigine all sell analytics as a product line; "we did the analytics" sounds impressive in a report. | Real footfall analytics needs a positioning stream (Ariadne uses ToF depth sensing plus phone-signal sensing). With QR you have **scan events**, not trajectories — you can count checkpoints, not people. A heatmap over scan counts would be a heatmap of where codes are, which is a property of the print layout, not of behaviour. | Honest usage monitoring (TS14): counts per scan, per session, per destination, per building, and a stale-code report. Describe it as usage monitoring, never as footfall analytics. |
+
+---
+
+## Feature Dependencies
+
+Dependency graph for phase ordering. **If A requires B, B must land in an earlier phase.**
+
+```
+[M7 Database schema + Prisma models]
+    └──requires──> [M8 Admin content CRUD (TS12)]
+    └──requires──> [TS16 Seeded synthetic campus]
+    └──requires──> [M8 Graph editor (TS9)]
+                        └──requires──> [TS10 Per-floor scale calibration]
+                        └──requires──> [D3 Calibration UX]
+                        └──requires──> [D5 Graph validator]
+                        └──requires──> [TS11 QR generation (needs valid nodes)]
+    └──requires──> [M5 Path finding (Dijkstra + A*)]
+                        └──requires──> [TS8 Step-free routing mode]
+                        └──requires──> [TS7 Distance / ETA (needs TS10 calibration)]
+                        └──requires──> [D2 Dijkstra vs A* comparison]
+                        └──requires──> [D7 Accessibility route explanation]
+
+[M1 Auth + roles]
+    └──requires──> [TS14 Usage monitoring (needs a user identity)]
+    └──requires──> [All admin endpoints (role gate)]
+
+[M2 QR scanning]
+    └──requires──> [D1 Signed tokens (token→node resolution)]
+    └──requires──> [M5 Path finding (origin = scanned node)]
+    └──requires──> [M4 Map (current-position marker)]
+    └──requires──> [TS15 Offline cache (graph + floor images)]
+                        └──requires──> [D8 Offline route computation]
+
+[M3 Search]
+    └──requires──> [M7 Schema (classroom/faculty/department relations)]
+    └──requires──> [M5 Path finding (chosen destination becomes the route target)]
+    └──enhances──> [D6 Search by faculty]
+
+[M4 Indoor map]
+    └──requires──> [TS9 Graph editor (the map data is authored there)]
+    └──requires──> [M7 Schema (floors with image + meters_per_pixel)]
+    └──requires──> [TS4 Route polyline overlay]
+    └──requires──> [TS15 Offline cached floor images]
+
+[M5 Path finding]
+    └──requires──> [TS6 Floor transition edges (cross-floor stair/lift edges)]
+    └──enhances──> [M6 Guidance]
+
+[M6 Guidance]
+    └──requires──> [TS5 Turn instruction generation]
+    └──requires──> [TS6 Floor transition instructions]
+    └──requires──> [D4 Checkpoint-progress model]
+    └──requires──> [M4 Map (next-step arrow + destination highlight)]
+
+[TS14 Usage monitoring] ──requires──> [D5 Graph validator (a dead code is a usage signal)]
+
+[D8 Offline route computation] ──conflicts──> [D2 Server-side A* comparison]
+     (one algorithm implementation lives in TypeScript for the report;
+      the Dart port is a simplified Dijkstra for the phone only — do not
+      try to keep them feature-identical, or you will lose a week)
+```
+
+### Dependency Notes
+
+- **[M7 Schema] requires everything.** Nothing is demonstrable until the domain model exists. It must be phase one, and it must be right the first time: `nodes` floor-scoped in image-pixel space, `edges` with `cost_m` + `kind` + `accessible` + `bidirectional`, `classrooms.entrance_node_id`, `floors.meters_per_pixel`.
+- **[TS9 Graph editor] requires [TS10 calibration]**, and [TS10] in turn requires a floor image with a known reference length. Calibration is a property of a *floor*, so the floor record and its image have to exist before the editor can be useful. Do not build the editor before the editor can produce a meaningful edge cost.
+- **[TS11 QR generation] requires [TS9].** A code is a node. Generating codes before the graph exists generates codes for nothing.
+- **[TS7 Distance/ETA] requires [TS10 calibration].** Shipping an ETA before calibration is shipping a lie that reviewers can disprove in one question.
+- **[TS4 Route polyline] requires [TS9 + M4].** No graph, no polyline.
+- **[M6 Guidance] requires [M5].** Instructions are a pure function over the path; there is no path, no instruction.
+- **[TS14 Usage monitoring] requires [M1 Auth].** Scan events must be attributable to a user to be worth recording.
+- **[TS15 Offline] requires [M2 + M5].** You can only cache a graph that you can also route over.
+- **[D8 Offline route computation] conflicts with [D2].** Ship the TypeScript Dijkstra/A\* for the server and the report first; port only the simplified Dijkstra to Dart. Trying to keep them identical will cost more than the offline feature is worth.
+- **[AF1] conflicts with [D4].** They are the same capability viewed two ways. This project picks checkpoint navigation. Do not let a later phase quietly reintroduce continuous tracking claims.
+
+---
+
+## Synopsis Module Traceability
+
+Every feature maps to a fixed synopsis module, or is marked as an addition with its justification. No feature may be added that is neither traceable nor justified.
+
+| Module | Features delivered | Table stakes | Differentiators | Deliberately excluded (anti-features) |
+|--------|-------------------|--------------|----------------|-----------------------------------|
+| **M1** User Authentication | TS13 | TS13 | — | AF8 (multi-language UI), AF9 (push/background location) |
+| **M2** QR Code Scanning | TS1, TS15 | TS1, TS15 | D1, D8 | AF1 (continuous tracking), AF4 (beacon positioning), AF2 (AR scan-anchored overlay) |
+| **M3** Classroom Search | TS2 | TS2 | D6 | AF8 (multi-language), AF5 (availability filters from timetable) |
+| **M4** Indoor Map | TS3, TS4 | TS3, TS4 | — | AF3 (3D digital twin), AF2 (AR overlay) |
+| **M5** Path Finding | TS6, TS7, TS8 | TS6, TS7, TS8 | D2, D7, D8 | AF6 (Google Maps SDK), AF10 (heatmaps) |
+| **M6** Navigation Guidance | TS5 | TS5 | D4 | AF1, AF2, AF9 |
+| **M7** Database Management | TS14, TS16 | TS14, TS16 | D5 (validator reads the schema) | AF5 (timetable / booking schema) |
+| **M8** Admin Module | TS9, TS10, TS11, TS12 | TS9, TS10, TS11, TS12 | D3, D5, D9 | AF7 (AI auto-tracing), AF8 (kiosk/web-embed surfaces) |
+| **ADD** — justified addition | D1 (signed tokens), D3 (calibration UX), D4 (checkpoint model), D5 (validator), D7 (accessibility explanation) | — | D1, D3, D4, D5, D7 | AF7 |
+
+**Justification for the five ADD features:** each one is required by, or directly strengthens, a decision already recorded in `PROJECT.md` (signed opaque QR tokens; edge cost in metres calibrated per floor; checkpoint guidance as the spine; admin graph editor as the credibility feature). None introduces a new external dependency or a new domain.
+
+---
+
+## MVP Definition
+
+### Launch With (v1)
+
+Minimum viable product — what's needed to validate the concept. **This is the whole of v1. Resist additions.**
+
+- [ ] **TS1 Scan-to-locate** with signed, opaque QR tokens (D1) — *without this there is no product*
+- [ ] **TS2 Destination search** by room number, building, floor, department (M3) — *the way users ask for things*
+- [ ] **TS3 Interactive multi-floor map** with floor switching, zoom/pan, origin marker (M4) — *the surface everything happens on*
+- [ ] **TS9 + TS10 + TS12 Graph editor, scale calibration, admin CRUD** (M8) — *the credibility feature; the system is a demo without it*
+- [ ] **TS11 QR generation and printable sheet** (M8) — *produces the physical artefact*
+- [ ] **TS16 Seeded synthetic campus** — *a demo needs data*
+- [ ] **M5 Path finding**: Dijkstra + A*, cross-floor transitions, `cost_m` in metres (M5) — *the academic core*
+- [ ] **TS6 + TS7 + TS8 Floor transitions, distance/ETA, step-free mode** — *what makes the route usable*
+- [ ] **TS5 Turn-by-turn instruction list** (M6) — *what makes the route followable*
+- [ ] **TS4 Route drawn on the map + destination highlight** — *what makes it look like a navigation app*
+- [ ] **TS13 Auth with user/admin roles** (M1) — *fixed by the synopsis*
+- [ ] **D2 Dijkstra-vs-A\* comparison** — *produces the report's evidence table*
+- [ ] **D4 Checkpoint-progress guidance** — *the honest framing of the whole product*
+- [ ] **D5 Graph validator** — *cheap, and it keeps the seed and the editor honest*
+- [ ] **TS14 Usage monitoring** — *required by the synopsis (monitor usage) and by the admin module*
+- [ ] **TS15 Offline cached-graph fallback** — *dead zones are normal; degrade, never fail*
+
+### Add After Validation (v1.x)
+
+Add once the core works and the report's evidence is in hand.
+
+- [ ] **D7 Accessibility route explanation** (name the lift; state plainly when no step-free route exists) — *small, high-perceived-value, strengthens the accessibility story*
+- [ ] **D3 Calibration UX wizard** inside the graph editor — *polish on TS10 once the editor works*
+- [ ] **D6 Search by faculty / department** — *the synopsis already lists faculty; nice once search works*
+- [ ] **D8 Offline route computation on-device** — *only if the server path is solid; it is a real differentiator but a real port*
+- [ ] **In-app minimal admin** (D9) — *phone-side quick edits: mark a room out of service, rename, add a note. Not the editor*
+- [ ] **Route sharing / deep link** (send a route to a colleague) — *cheap, and demo-friendly*
+
+### Future Consideration (v2+)
+
+Defer until the mini project is done and the milestone is closed.
+
+- [ ] **Compass + accelerometer dead reckoning** between checkpoints — *explicitly an optional later enhancement, never a baseline promise. PDR drifts over time and needs step-length calibration; the Zapworks guide classifies inertial sensing as a supplement, not a primary method*
+- [ ] **Real SJCET floor-plan digitisation** — *PROJECT.md says optional and non-blocking*
+- [ ] **App-free web route page** (scan → browser, no app) — *addresses the ~46% app-uninstall drop-off, but is a second client*
+- [ ] **Public kiosk at building entrances** — *needs a maintained display device and a separate offline client*
+- [ ] **Room status derived from a timetable feed** — *external integration*
+- [ ] **Additional language** (Malayalam) — *one language, content not code*
+
+---
+
+## Feature Prioritization Matrix
+
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| TS1 Scan-to-locate (M2) | HIGH | LOW | **P1** |
+| TS9 Graph editor (M8) | HIGH | HIGH | **P1** |
+| M5 Dijkstra + A* path finding (M5) | HIGH | MEDIUM | **P1** |
+| TS2 Destination search (M3) | HIGH | MEDIUM | **P1** |
+| TS3 Interactive map (M4) | HIGH | HIGH | **P1** |
+| TS10 Scale calibration (M8) | HIGH | MEDIUM | **P1** |
+| TS5 Turn instructions (M6) | HIGH | MEDIUM | **P1** |
+| TS6 Floor transitions (M5/M6) | HIGH | MEDIUM | **P1** |
+| TS7 Distance + ETA (M5) | HIGH | MEDIUM | **P1** |
+| TS16 Seeded campus (M7) | HIGH | MEDIUM | **P1** |
+| TS11 QR generation (M8) | HIGH | MEDIUM | **P1** |
+| TS12 Admin CRUD (M8) | HIGH | MEDIUM | **P1** |
+| TS4 Route on map (M4) | HIGH | MEDIUM | **P1** |
+| TS13 Auth + roles (M1) | MEDIUM | LOW | **P1** |
+| TS8 Step-free routing (M5) | HIGH | MEDIUM | **P1** |
+| TS15 Offline fallback (M2/M5) | MEDIUM | MEDIUM | **P2** |
+| TS14 Usage monitoring (M8/M7) | MEDIUM | MEDIUM | **P2** |
+| D1 Signed QR tokens (M2) | MEDIUM | MEDIUM | **P2** |
+| D2 Dijkstra vs A* (M5) | MEDIUM (report value: HIGH) | MEDIUM | **P2** |
+| D4 Checkpoint progress (M6) | HIGH | MEDIUM | **P2** |
+| D5 Graph validator (M8) | MEDIUM | LOW | **P2** |
+| D7 Accessibility explanation (M5/M6) | MEDIUM | LOW | **P3** |
+| D3 Calibration UX (M8) | MEDIUM | MEDIUM | **P3** |
+| D6 Search by faculty (M3) | MEDIUM | LOW | **P3** |
+| D8 Offline on-device routing (M5) | MEDIUM | MEDIUM | **P3** |
+| D9 In-app minimal admin (M8) | LOW | MEDIUM | **P3** |
+| D10 High-quality seed dataset (M7) | MEDIUM | MEDIUM | **P3** |
+
+**Priority key:**
+- **P1:** Must have for launch. 14 features, ~44 student-days.
+- **P2:** Should have, add when possible. 4 features, ~15 student-days.
+- **P3:** Nice to have, future consideration. 5 features, ~13 student-days.
+
+**Realistic v1 = P1 + P2 ≈ 59 student-days**, with P3 pulled in only if the schedule allows. A v1 of P1 alone (~44 days) with a polished seed is a *stronger* deliverable than a v1 of P1 + everything, because TS9 and TS3 each carry schedule risk.
+
+---
+
+## Competitor Feature Analysis
+
+| Feature | Mappedin (Mar 2026) | MazeMap (Jul 2026) | Navigine / ExpoFP (QR-native) | Our approach |
+|---------|--------------------|--------------------|--------------------------------|--------------|
+| Positioning | Beacon-free "blue dot" via Wi-Fi/GPS/sensor fusion | Beacon support | **QR point-fix at checkpoints** — no continuous tracking | **Same as QR-native, and we say so.** Scan = known origin. Checkpoint guidance. Honest, and it is the actual constraint. |
+| Map | Interactive multi-floor, AI-assisted authoring, no-code CMS | Interactive maps + Map Editor | Interactive floor plan, QR entry points | Custom 2D renderer over PNG. **No** Google Maps SDK, no 3D. |
+| Search | Building/room search, web-based, embeddable | Web maps with building and room search | POI list in the app | Room number, building, floor, department, **faculty** (D6). Faculty search is our edge. |
+| Routing | Turn-by-turn, multi-building | Turn-by-turn, 3D map, kiosk mode | Routes prioritising suitable elevators/entrances; can avoid narrow stairs | Dijkstra **and** A\* on the server, metres-calibrated, cross-floor, step-free as a first-class mode, **Dijkstra-vs-A\* comparison** (D2). |
+| Accessibility | Verified WCAG 2.1 AA, step-free routing auto-excluding stairs, screen reader, 40+ languages | Avoid-stairs toggle, audio nav, high contrast | Route options avoiding narrow stairs / steep climbs | Step-free as a **constraint on the search** (TS8), honest failure when no step-free route exists (D7). **Not** claiming WCAG AA. |
+| Distance / ETA | Yes | "37 metres, then turn left" | Route on interactive plan | Metre-accurate via per-floor `meters_per_pixel` (TS10 + D3). This is our honest replacement for their CAD/BIM pipeline. |
+| Admin / CMS | Map Editor, publish a room change in minutes, POI + styling + closures, CAD upload, analytics | Map Editor for routes, closed areas, POIs, colours | Admin panel QR download per location; sign/placard QR templates | **The graph editor is the deliverable** (TS9). Graph validator (D5). Usage monitoring, honestly labelled as scan/session counts, never footfall (TS14, AF10). |
+| Analytics | Footfall + space utilisation | User analytics, heatmaps | Customer behaviour data | Scan/session/destination counts + stale-code report. **Explicitly not** footfall analytics (AF10). |
+| Offline | — | Printable map export (SVG/PNG/PDF) | **Works offline once the map is cached** | Cached graph + cached floor images + on-device routing (TS15, D8). Offline is table stakes for us because indoor dead zones are guaranteed. |
+| Delivery | Web, kiosk, embeddable SDK | Web, kiosk, 3D, APIs | App or browser | **Flutter mobile app only** (fixed by the synopsis). Web admin panel only for staff. No kiosk, no embed (AF8). |
+
+**Where we win:** metre-accuracy from PNGs via calibration; the graph editor as a first-class, demonstrable artefact; the Dijkstra-vs-A\* evidence; the honest checkpoint framing; faculty search; a graph validator.
+
+**Where we lose (and should concede in the report):** no continuous blue-dot positioning, no 3D/AR, no kiosk/web-embed surfaces, no timetable/booking integration, no formal WCAG certification. Conceding these explicitly, with reasons, is a strength in an academic review — it shows the scope was chosen, not accidental.
+
+---
+
+## What Might I Have Missed?
+
+Honest gaps in this research:
+
+1. **No user research with actual SJCET students.** The "what students ask for" claims are inferred from campus wayfinding vendors and the synopsis, not from interviews. If time allows before requirements freeze, ten minutes of asking students what they actually search for ("where is my next class", "which lift", "where is the lab") would sharpen TS2 and possibly reveal a feature nobody else has.
+2. **Academic/student-project feature sets were sampled but not surveyed exhaustively.** A systematic review of Indian MCA mini projects and IEEE student papers on QR indoor navigation would likely surface "expected" feature checklists that examiners in this region assume. Worth one focused pass before the roadmap is finalised.
+3. **QR token format is unvalidated against print reality.** Whether the signed token fits legibly in a printed A4 placard at the sizes needed for error correction is a physical test, not a research question. Design for a fallback (short numeric code + lookup) rather than assuming the QR will scan from 2 m.
+4. **The graph editor's UX is the largest schedule risk and is under-researched here.** Features research tells us *that* it must exist; it does not tell us the cheapest editor interaction model that a single developer can build and a non-technical admin can use. That deserves phase-specific research (see below).
+5. **Map rendering performance on large PNGs on mid-range Android** was not investigated. A 4000-pixel-wide floor plan, zoomed and panned, is a real performance question for Flutter's `CustomPainter`. Flag for the implementation phase, not for features.
+
+---
+
+## Sources
+
+| Source | Date | Used for | Confidence |
+|--------|------|----------|------------|
+| [Zapworks — The Complete Guide to Indoor Navigation](https://zap.works/guide-to-indoor-navigation/) | 2026 | Core feature landscape; navigation-mesh model; QR as point-fix; app-uninstall drop-off; AR/3D/2D trade-offs; technology comparison table | MEDIUM (vendor-authored, cross-checked) |
+| [ExpoFP — Indoor Navigation for Events: GPS, BLE, QR Compared](https://blog.expofp.com/indoor-navigation-for-events-gps-ble-qr-compared/) | Aug 25, 2026 | QR checkpoint model; offline behaviour; accuracy/setup/maintenance per technology | MEDIUM (vendor-authored, cross-checked) |
+| [Mappedin — Best campus wayfinding software in 2026](https://www.mappedin.com/resources/blog/best-campus-wayfinding-software/) | Mar 26, 2026 | Campus table stakes; WCAG AA; no-code CMS; competitor feature sets; beacon-free positioning | MEDIUM (vendor-authored, cross-checked) |
+| [MazeMap — Indoor Navigation for Campuses: A Complete Guide](https://www.mazemap.com/post/indoor-navigation-campuses) | Jul 15, 2026 | Campus feature set; avoid-stairs toggle; kiosk mode; printable map export; accessible routing as legal obligation | MEDIUM (vendor-authored, cross-checked) |
+| [Navigine — Unlocking the Secrets of Indoor Navigation using QR Codes](https://navigine.com/blog/indoor-navigation-using-qr-codes/) | Dec 6, 2024 | QR scan→map→POI→route flow; elevator/entrance preference; avoid-narrow-stairs option | MEDIUM (vendor-authored, cross-checked) |
+| [Ariadne — Accessible Wayfinding: Step-Free Indoor Routing](https://www.ariadne.inc/resources/blogs/accessible-wayfinding-routes/) | Jul 2, 2026 | Accessibility as a first-class routing mode; honest failure reporting; naming the lift used; why post-filtering accessibility fails | MEDIUM (vendor-authored) |
+| [Pointr — Indoor Navigation: Everything You Need to Know](https://www.pointr.tech/blog/indoor-navigation-everything-you-need-to-know) | 2026 | General feature landscape; indoor GPS degradation (30–100 m) | MEDIUM (vendor-authored) |
+| [Marciniak et al., *Automatic Generation of Guidance for Indoor Navigation*, MDPI Appl. Sci. 14(22):10252](https://www.mdpi.com/2076-3417/14/22/10252) | 2024 | Turn-instruction generation from route geometry (legs + bearing classification) | MEDIUM (peer-reviewed) |
+| [Veloz et al., *Offline System for 2D Indoor Navigation*, MDPI Informatics 12(2):34](https://www.mdpi.com/2227-9709/12/2/34) | 2025 | Offline indoor navigation as a first-class problem; on-device map/route data | MEDIUM (peer-reviewed) |
+| [Fast Routing Graph Extraction from Floor Plans (ResearchGate)](https://www.researchgate.net/publication/319911385_Fast_Routing_Graph_Extraction_from_Floor_Plans) | 2018 | Raster floor plans perform poorly for routing → a separate navigation graph is required | MEDIUM (academic, via aggregator) |
+| [Lund University — Semantic Analysis of Indoor Floor Plans for Creation of a Navigation Graph](https://lup.lub.lu.se/student-papers/record/9182950/file/9182951.pdf) | n.d. | Navigation graphs are authored by hand: placing nodes and connecting edges | MEDIUM (academic) |
+| [Mappedin — How to create an indoor navigation map in 9 steps](https://www.mappedin.com/resources/blog/how-to-create-indoor-navigation-maps/) | 2026 | Geo-referencing floor-plan measurements to real-world dimensions | MEDIUM (vendor-authored) |
+| [arXiv 2512.12177 — LLM-Guided Floorplan Parsing for Indoor Navigation](https://arxiv.org/html/2512.12177v1) | 2025 | Scale factor converts floorplan measurements into real-world dimensions | MEDIUM (preprint, single source — treat as corroborating only) |
+| [3D Wayfinder — Enhancing Wayfinding with QR Codes and NFC Tags](https://3dwayfinder.com/enhancing-wayfinding-with-qr-codes-and-nfc-tags/) | Nov 20, 2023 | Admin-panel per-location QR download | MEDIUM (vendor-authored) |
+| [WayfindingPro — Generating QR Codes](https://www.wayfindingpro.com/sdk/generating-qr-codes/) | n.d. | QR codes on signs/placards at elevators, lobbies, entrances | LOW (vendor marketing page) |
+| [MazeMap — Map Editor](https://www.mazemap.com/post/map-editor-ends-downtime) · [Mappedin — Map CMS](https://www.mappedin.com/map-cms/) | 2026 | Admin authoring is the core platform job; routes, closures, POIs, colours | MEDIUM (vendor-authored) |
+
+**Research method note:** the `research-plan` seam routed all eight questions to the `websearch` provider (no Context7/exa/tavily/brave/firecrawl enabled in `.planning/config.json`). Confidence was set by the `classify-confidence` seam: `websearch` → **LOW** unverified, **MEDIUM** with cross-verification. Every claim above that carries MEDIUM was checked against at least two independent vendors or against a peer-reviewed source; claims resting on a single vendor page are marked LOW in the table.
+
+**Deliberate gaps:** no Indian-academic-project feature survey; no live user research with SJCET students; no verification of QR print-legibility at physical sizes; no performance testing of large PNG floor plans in Flutter.
+
+---
+
+*Feature research for: QR-based indoor campus navigation (indoor wayfinding / campus navigation)*
+*Researched: 2026-10-22*
+*Feeds: requirements definition, roadmap phasing, and scope control for the MCA mini project.*
