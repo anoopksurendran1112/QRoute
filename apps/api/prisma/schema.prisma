@@ -1,0 +1,167 @@
+// QRoute — Phase 1 data model.
+//
+// Prisma 7 notes (see .planning/research/STACK.md):
+//   * The generator is `prisma-client` (not the deprecated prisma-client-js) and
+//     requires an explicit `output`.
+//   * `importFileExtension = "ts"` is what stops tsx throwing
+//     "Cannot find module './internal/class.js'".
+//   * The datasource block carries ONLY the provider. In v7 the connection URL
+//     lives in prisma7.config.ts, never here.
+//
+// Invariants that later phases depend on:
+//   * `Edge.costM` and `Floor.metersPerPixel` are non-nullable decimals. A
+//     placeholder scale silently makes every reported distance fiction, so no
+//     code path may persist a pixel-space cost as metres.
+//   * Every relation declares both sides, or `prisma validate` fails.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum NodeKind {
+  junction
+  door
+  stair
+  lift
+  entrance
+}
+
+enum EdgeKind {
+  walk
+  stair
+  lift
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(user)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Department {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  code       String      @unique
+  faculty    Faculty[]
+  classrooms Classroom[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@map("departments")
+}
+
+model Faculty {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  designation  String?
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("faculty")
+}
+
+model Building {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  campus    String?
+  floors    Floor[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("buildings")
+}
+
+model Floor {
+  id             String      @id @default(cuid())
+  buildingId     String
+  building       Building    @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  level          Int
+  name           String?
+  imagePath      String?
+  imageSha256    String?
+  widthPx        Int?
+  heightPx       Int?
+  metersPerPixel Decimal     @db.Decimal(10, 6)
+  classrooms     Classroom[]
+  nodes          Node[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([buildingId, level])
+  @@map("floors")
+}
+
+model Classroom {
+  id             String      @id @default(cuid())
+  roomNumber     String
+  name           String?
+  floorId        String
+  floor          Floor       @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  departmentId   String?
+  department     Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  entranceNodeId String?
+  entranceNode   Node?       @relation("ClassroomEntrance", fields: [entranceNodeId], references: [id], onDelete: SetNull)
+  capacity       Int?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([floorId, roomNumber])
+  @@map("classrooms")
+}
+
+model Node {
+  id         String      @id @default(cuid())
+  floorId    String
+  floor      Floor       @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  code       String
+  kind       NodeKind
+  x          Decimal     @db.Decimal(10, 3)
+  y          Decimal     @db.Decimal(10, 3)
+  label      String?
+  edgesFrom  Edge[]      @relation("EdgeFrom")
+  edgesTo    Edge[]      @relation("EdgeTo")
+  classrooms Classroom[] @relation("ClassroomEntrance")
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([floorId, code])
+  @@map("nodes")
+}
+
+model Edge {
+  id            String   @id @default(cuid())
+  fromNodeId    String
+  fromNode      Node     @relation("EdgeFrom", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNodeId      String
+  toNode        Node     @relation("EdgeTo", fields: [toNodeId], references: [id], onDelete: Cascade)
+  kind          EdgeKind @default(walk)
+  costM         Decimal  @db.Decimal(8, 2)
+  accessible    Boolean  @default(true)
+  bidirectional Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([fromNodeId, toNodeId, kind])
+  @@map("edges")
+}

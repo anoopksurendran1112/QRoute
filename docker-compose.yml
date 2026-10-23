@@ -18,6 +18,9 @@ services:
       - --collation-server=utf8mb4_0900_ai_ci
     volumes:
       - qroute-mysql-data:/var/lib/mysql
+      # Grants the app user the CREATE DATABASE right Prisma needs for its
+      # shadow database on first boot. See the file for the manual fallback.
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pdevroot"]
       interval: 5s
