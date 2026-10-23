@@ -18,7 +18,16 @@
   1. Users can register and log in with role-based access (admins distinguished from regular users)
   2. Admin can create, edit and delete buildings, floors, classrooms, departments and faculty
   3. A seeded synthetic campus exists and is loadable for demonstration without manual setup  
-**Plans**: TBD
+**Plans:** 7 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Workspace, pinned dependencies, MySQL 8 container and the environment contract (wave 1)
+- [ ] 01-02-PLAN.md — Prisma 7 schema, gated generate + migration, adapter-backed client and DB health endpoint (wave 2)
+- [ ] 01-03-PLAN.md — Shared domain contract and the Vitest harness with a DB self-test (wave 3)
+- [ ] 01-04-PLAN.md — Auth API: bcryptjs, JWT, role middleware, login throttling and the AUTH-01 suite (wave 4)
+- [ ] 01-05-PLAN.md — Catalog CRUD API, idempotent demo campus seed, seed:verify, fixtures and admin tests (wave 5)
+- [ ] 01-06-PLAN.md — Admin panel shell: API client, login, role-gated routing and client tests (wave 5)
+- [ ] 01-07-PLAN.md — Admin catalog screens for all five entities with create/edit/delete (wave 6)
 
 ### Phase 2: Graph Core & Routing Engine
 **Goal**: Implement server-side pathfinding with Dijkstra and A* over a metre-calibrated graph with turn-by-turn guidance  
