@@ -25,6 +25,7 @@
   "dependencies": {
     "@prisma/adapter-mariadb": "7.10.1",
     "@prisma/client": "7.10.1",
+    "@qroute/shared": "*",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.2",
     "cors": "^2.8.6",
