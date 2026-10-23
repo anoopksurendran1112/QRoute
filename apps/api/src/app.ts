@@ -4,7 +4,9 @@ import helmet from "helmet";
 import pino from "pino";
 import pinoHttp from "pino-http";
 import { config } from "./config.ts";
+import { isApiError } from "./lib/apiError.ts";
 import { authRouter } from "./modules/auth/router.ts";
+import { catalogRouter } from "./modules/catalog/router.ts";
 import { adminRouter } from "./routes/admin.ts";
 import { healthRouter } from "./routes/health.ts";
 
@@ -32,6 +34,7 @@ export function createApp(): express.Express {
   app.use("/v1/health", healthRouter);
   app.use("/v1/auth", authRouter);
   app.use("/v1/admin", adminRouter);
+  app.use("/v1", catalogRouter);
 
   // Unknown /v1 route. Anything outside /v1 falls through to Express's default.
   app.use("/v1", (_req, res) => {
@@ -41,6 +44,19 @@ export function createApp(): express.Express {
   });
 
   const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+    // Services throw ApiError for expected failures (404/409/400); those are
+    // not defects and must not be logged as unhandled 500s.
+    if (isApiError(err)) {
+      res.status(err.status).json({
+        error: {
+          code: err.code,
+          message: err.message,
+          ...(err.details === undefined ? {} : { details: err.details }),
+        },
+      });
+      return;
+    }
+
     req.log.error({ err }, "unhandled request error");
     res.status(500).json({
       error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred" },

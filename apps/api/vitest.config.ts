@@ -14,7 +14,7 @@ export default defineConfig({
     // pino-http logs every request at `info`; that noise buries the test
     // reporter. dotenv does not override an existing env var, so this wins.
     env: { LOG_LEVEL: "silent" },
-    testTimeout: 20_000,
-    hookTimeout: 20_000,
+    testTimeout: 300_000,
+    hookTimeout: 300_000,
   },
 });

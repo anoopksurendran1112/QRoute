@@ -5,3 +5,4 @@
 
 export * from "./domain.ts";
 export * from "./schemas/auth.ts";
+export * from "./schemas/catalog.ts";
