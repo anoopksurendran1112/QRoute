@@ -4,3 +4,4 @@
 // schemas/catalog.ts) so consumers never change their import path.
 
 export * from "./domain.ts";
+export * from "./schemas/auth.ts";

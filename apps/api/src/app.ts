@@ -4,6 +4,8 @@ import helmet from "helmet";
 import pino from "pino";
 import pinoHttp from "pino-http";
 import { config } from "./config.ts";
+import { authRouter } from "./modules/auth/router.ts";
+import { adminRouter } from "./routes/admin.ts";
 import { healthRouter } from "./routes/health.ts";
 
 /**
@@ -28,6 +30,8 @@ export function createApp(): express.Express {
   app.use(pinoHttp({ logger }));
 
   app.use("/v1/health", healthRouter);
+  app.use("/v1/auth", authRouter);
+  app.use("/v1/admin", adminRouter);
 
   // Unknown /v1 route. Anything outside /v1 falls through to Express's default.
   app.use("/v1", (_req, res) => {

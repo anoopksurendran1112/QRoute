@@ -11,6 +11,9 @@ export default defineConfig({
     // Every suite shares one MySQL database; parallel files would race on
     // cleanup and on the seeded campus.
     fileParallelism: false,
+    // pino-http logs every request at `info`; that noise buries the test
+    // reporter. dotenv does not override an existing env var, so this wins.
+    env: { LOG_LEVEL: "silent" },
     testTimeout: 20_000,
     hookTimeout: 20_000,
   },
