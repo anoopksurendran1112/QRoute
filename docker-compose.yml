@@ -1,0 +1,29 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: qroute-mysql
+    restart: unless-stopped
+    ports:
+      # Host port 3307: a native MySQL80 service already owns 3306 on this
+      # machine. The container still speaks 3306 internally; only the host
+      # mapping differs, so DATABASE_URL must use 3307.
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: devroot
+      MYSQL_DATABASE: qroute
+      MYSQL_USER: qroute
+      MYSQL_PASSWORD: qroute
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    volumes:
+      - qroute-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pdevroot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  qroute-mysql-data:

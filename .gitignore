@@ -48,3 +48,14 @@ Thumbs.db
 # Test output
 coverage/
 .nyc_output/
+
+# Prisma generated client
+apps/api/src/generated/
+packages/shared/dist/
+apps/admin/dist/
+
+
+# Prisma generated client
+apps/api/src/generated/
+packages/shared/dist/
+apps/admin/dist/
