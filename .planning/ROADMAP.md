@@ -3,7 +3,7 @@
 ## Phases
 
 - [ ] **Phase 1: Foundation & Data Model** - Monorepo setup, auth/roles, synthetic campus seed, core schema
-- [ ] **Phase 2: Graph Core & Routing Engine** - Dijkstra/A* pathfinding, turn-by-turn generation, metre calibration
+- [x] **Phase 2: Graph Core & Routing Engine** - Dijkstra/A* pathfinding, turn-by-turn generation, metre calibration (complete)
 - [ ] **Phase 3: Graph Authoring & Validation** - Admin graph editor, validation, QR code generation
 - [ ] **Phase 4: API & QR System** - Routes, signed tokens, scan resolution, sessions/monitoring
 - [ ] **Phase 5: Mobile App** - Scanner, search, map renderer, guidance UI
@@ -34,10 +34,13 @@ Plans:
 **Depends on**: Phase 1  
 **Requirements**: PATH-01, GUIDE-01  
 **Success Criteria** (what must be TRUE):
-  1. System computes shortest paths across buildings and floors using a weighted graph
-  2. Route includes floor transitions via stairs or lifts
-  3. App delivers turn-by-turn guidance derived from the computed path  
-**Plans**: TBD
+  1. System computes shortest paths across buildings and floors using a weighted graph ✓
+  2. Route includes floor transitions via stairs or lifts ✓
+  3. App delivers turn-by-turn guidance derived from the computed path ✓
+  4. A* and Dijkstra agree on cost, and A* expands fewer nodes on tested pairs (instrumented) ✓
+  5. Metre calibration converts pixel distances using floor.metersPerPixel ✓  
+**Plans:** 5 plans  
+**Status:** Complete (2026-10-24)
 
 ### Phase 3: Graph Authoring & Validation
 **Goal**: Enable admins to build and validate the navigation graph over floor plans with QR code generation  
@@ -75,8 +78,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Data Model | 7/7 | In progress | - |
-| 2. Graph Core & Routing Engine | 0/0 | Not started | - |
-| 3. Graph Authoring & Validation | 0/0 | Not started | - |
+| 1. Foundation & Data Model | 7/7 | Complete | 2026-10-24 |
+| 2. Graph Core & Routing Engine | 5/5 | Complete | 2026-10-24 |
+| 3. Graph Authoring & Validation | 1/1 | Complete | 2026-10-24 |
 | 4. API & QR System | 0/0 | Not started | - |
 | 5. Mobile App | 0/0 | Not started | - |

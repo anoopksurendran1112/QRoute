@@ -91,7 +91,9 @@ export async function apiRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  const url = path.startsWith("http")
+    ? path
+    : `${API_BASE_URL}${path.startsWith("/") ? (path.startsWith(API_BASE_URL) ? path.slice(API_BASE_URL.length) || "/" : path) : `/${path}`}`.replace(/\/v1\/v1\//, "/v1/");
   const response = await fetch(url, { ...options, headers });
 
   if (response.status === 401) {

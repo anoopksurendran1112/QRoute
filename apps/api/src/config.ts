@@ -19,6 +19,10 @@ const envSchema = z.object({
     .string()
     .min(32, "JWT_SECRET must be at least 32 characters; generate one with `openssl rand -base64 48`"),
 
+  // Optional dedicated QR signing key. When absent the JWT secret is used, so
+  // no secret is ever defaulted (threat T-01-04).
+  QR_SECRET: z.string().min(16, "QR_SECRET must be at least 16 characters").optional(),
+
   PORT: z.coerce.number().int().min(1).max(65535).default(8080),
   CORS_ORIGIN: z.string().min(1).default("http://localhost:5173"),
   BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(10),
@@ -49,6 +53,7 @@ const env = parsed.data;
 export const config = Object.freeze({
   databaseUrl: env.DATABASE_URL,
   jwtSecret: env.JWT_SECRET,
+  qrSecret: env.QR_SECRET ?? env.JWT_SECRET,
   port: env.PORT,
   corsOrigin: env.CORS_ORIGIN,
   bcryptRounds: env.BCRYPT_ROUNDS,

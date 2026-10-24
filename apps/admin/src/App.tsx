@@ -15,6 +15,7 @@ import { FloorsPage } from "./pages/catalog/FloorsPage.tsx";
 import { ClassroomsPage } from "./pages/catalog/ClassroomsPage.tsx";
 import { DepartmentsPage } from "./pages/catalog/DepartmentsPage.tsx";
 import { FacultyPage } from "./pages/catalog/FacultyPage.tsx";
+import { GraphEditorPage } from "./pages/GraphEditorPage.tsx";
 
 function DashboardPage() {
   const { user, signOut } = useAuth();
@@ -25,6 +26,7 @@ function DashboardPage() {
     { to: "/catalog/classrooms", label: "Classrooms" },
     { to: "/catalog/departments", label: "Departments" },
     { to: "/catalog/faculty", label: "Faculty" },
+    { to: "/graph-editor", label: "Graph Editor" },
   ];
 
   return (
@@ -116,6 +118,14 @@ const routes: RouteObject[] = [
     element: (
       <RequireAdmin>
         <FacultyPage />
+      </RequireAdmin>
+    ),
+  },
+  {
+    path: "/graph-editor",
+    element: (
+      <RequireAdmin>
+        <GraphEditorPage />
       </RequireAdmin>
     ),
   },

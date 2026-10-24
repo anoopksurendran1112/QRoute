@@ -5,8 +5,12 @@ import pino from "pino";
 import pinoHttp from "pino-http";
 import { config } from "./config.ts";
 import { isApiError } from "./lib/apiError.ts";
+import { UPLOAD_DIR } from "./lib/upload.ts";
 import { authRouter } from "./modules/auth/router.ts";
 import { catalogRouter } from "./modules/catalog/router.ts";
+import { graphRouter } from "./modules/graph/router.ts";
+import { qrRouter } from "./modules/qr/router.ts";
+import { routingRouter } from "./modules/routing/router.ts";
 import { adminRouter } from "./routes/admin.ts";
 import { healthRouter } from "./routes/health.ts";
 
@@ -31,9 +35,25 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: "1mb" }));
   app.use(pinoHttp({ logger }));
 
+  // Floor-plan images are content-hashed and immutable, so they can be cached
+  // forever. helmet's CORP default blocks cross-origin image loads, which the
+  // Vite dev server (5173 -> 8080) would hit — allow same-site reads here only.
+  app.use(
+    "/uploads",
+    (_req, res, next) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      next();
+    },
+    express.static(UPLOAD_DIR, { dotfiles: "ignore", immutable: true, maxAge: "1y" }),
+  );
+
   app.use("/v1/health", healthRouter);
   app.use("/v1/auth", authRouter);
   app.use("/v1/admin", adminRouter);
+  app.use("/v1/routes", routingRouter);
+  app.use("/v1/graph", graphRouter);
+  app.use("/v1/qr", qrRouter);
   app.use("/v1", catalogRouter);
 
   // Unknown /v1 route. Anything outside /v1 falls through to Express's default.
