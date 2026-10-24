@@ -27,7 +27,7 @@ Plans:
 - [ ] 01-04-PLAN.md — Auth API: bcryptjs, JWT, role middleware, login throttling and the AUTH-01 suite (wave 4)
 - [ ] 01-05-PLAN.md — Catalog CRUD API, idempotent demo campus seed, seed:verify, fixtures and admin tests (wave 5)
 - [ ] 01-06-PLAN.md — Admin panel shell: API client, login, role-gated routing and client tests (wave 5)
-- [ ] 01-07-PLAN.md — Admin catalog screens for all five entities with create/edit/delete (wave 6)
+- [x] 01-07-PLAN.md — Admin catalog screens for all five entities with create/edit/delete (wave 6)
 
 ### Phase 2: Graph Core & Routing Engine
 **Goal**: Implement server-side pathfinding with Dijkstra and A* over a metre-calibrated graph with turn-by-turn guidance  
@@ -75,7 +75,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Data Model | 0/0 | Not started | - |
+| 1. Foundation & Data Model | 7/7 | In progress | - |
 | 2. Graph Core & Routing Engine | 0/0 | Not started | - |
 | 3. Graph Authoring & Validation | 0/0 | Not started | - |
 | 4. API & QR System | 0/0 | Not started | - |

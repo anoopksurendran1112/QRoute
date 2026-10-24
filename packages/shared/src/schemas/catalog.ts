@@ -29,19 +29,46 @@ export const floorCreateSchema = z.object({
   name: z.string().trim().max(120).optional(),
   imagePath: z.string().trim().max(255).optional(),
   imageSha256: z.string().trim().length(64).optional(),
-  widthPx: z.coerce.number().int().positive().max(20_000).optional(),
-  heightPx: z.coerce.number().int().positive().max(20_000).optional(),
+  widthPx: z.preprocess(
+    (v) => {
+      if (v === "" || v === null || v === undefined) return undefined;
+      if (typeof v === "number" && Number.isNaN(v)) return undefined;
+      return v;
+    },
+    z.coerce.number().int().positive().max(20_000).optional(),
+  ),
+  heightPx: z.preprocess(
+    (v) => {
+      if (v === "" || v === null || v === undefined) return undefined;
+      if (typeof v === "number" && Number.isNaN(v)) return undefined;
+      return v;
+    },
+    z.coerce.number().int().positive().max(20_000).optional(),
+  ),
   // Metres per pixel. Positive and sane: 1 px = 1 m is the classic unit bug.
-  metersPerPixel: z.coerce.number().positive().max(10),
+  metersPerPixel: z.coerce
+    .number()
+    .positive()
+    .max(10)
+    .refine((v) => Math.abs(v - 1.0) > 1e-9, {
+      message: "metersPerPixel must not be 1.0 (1px = 1m is almost certainly incorrect)",
+    }),
 });
 
 export const classroomCreateSchema = z.object({
   roomNumber: z.string().trim().min(1).max(24),
   name: z.string().trim().max(120).optional(),
   floorId: id,
-  departmentId: id.optional(),
-  entranceNodeId: id.optional(),
-  capacity: z.coerce.number().int().positive().max(2_000).optional(),
+  departmentId: z.preprocess((v) => (v === "" || v === null || v === undefined ? undefined : v), id.optional()),
+  entranceNodeId: z.preprocess((v) => (v === "" || v === null || v === undefined ? undefined : v), id.optional()),
+  capacity: z.preprocess(
+    (v) => {
+      if (v === "" || v === null || v === undefined) return undefined;
+      if (typeof v === "number" && Number.isNaN(v)) return undefined;
+      return v;
+    },
+    z.coerce.number().int().positive().max(2_000).optional(),
+  ),
 });
 
 export const departmentCreateSchema = z.object({

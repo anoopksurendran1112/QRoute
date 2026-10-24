@@ -52,11 +52,18 @@ export function EntityForm({
   async function submit(values: Record<string, unknown>) {
     const normalized: Record<string, unknown> = {};
     for (const field of config.fields) {
-      const coerced = coerceValue(field.type, values[field.name]);
+      const raw = values[field.name];
+      if (raw === "" || raw === null || (typeof raw === "number" && Number.isNaN(raw))) {
+        if (field.required && mode === "create") {
+          normalized[field.name] = raw;
+        }
+        continue;
+      }
+      const coerced = coerceValue(field.type, raw);
       if (coerced !== undefined) {
         normalized[field.name] = coerced;
       } else if (mode === "create" && field.required) {
-        normalized[field.name] = values[field.name];
+        normalized[field.name] = raw;
       }
     }
     await (onSubmit as (v: Record<string, unknown>) => Promise<void> | void)(normalized);
@@ -112,7 +119,9 @@ export function EntityForm({
             {field.label}
             <input
               type={field.type}
-              {...register(field.name)}
+              {...register(field.name, {
+                setValueAs: field.type === "number" ? (v) => (v === "" || v === null ? undefined : v) : undefined,
+              })}
               placeholder={field.placeholder}
               className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             />

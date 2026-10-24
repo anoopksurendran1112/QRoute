@@ -75,7 +75,7 @@ export const floorConfig: EntityConfig = {
     { name: "buildingId", label: "Building", type: "select", required: true, optionsSource: "buildings" },
     { name: "level", label: "Level", type: "number", required: true },
     { name: "name", label: "Name", type: "text" },
-    { name: "metersPerPixel", label: "Meters per pixel", type: "number", required: true, helpText: "Positive calibration; never 1.0" },
+    { name: "metersPerPixel", label: "Meters per pixel", type: "number", required: true, helpText: "Positive calibration; must not be 1.0 (e.g., 0.01–0.05)" },
     { name: "widthPx", label: "Width (px)", type: "number" },
     { name: "heightPx", label: "Height (px)", type: "number" },
     { name: "imagePath", label: "Image path", type: "text" },

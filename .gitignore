@@ -48,6 +48,9 @@ Thumbs.db
 # Test output
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
 
 # Prisma generated client
 apps/api/src/generated/
