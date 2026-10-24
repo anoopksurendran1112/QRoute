@@ -4,18 +4,32 @@ import {
   Navigate,
   Route,
   Routes,
+  Link,
   type RouteObject,
 } from "react-router-dom";
 import { RequireAdmin } from "./auth/RequireAdmin.tsx";
 import { useAuth } from "./auth/AuthProvider.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
+import { BuildingsPage } from "./pages/catalog/BuildingsPage.tsx";
+import { FloorsPage } from "./pages/catalog/FloorsPage.tsx";
+import { ClassroomsPage } from "./pages/catalog/ClassroomsPage.tsx";
+import { DepartmentsPage } from "./pages/catalog/DepartmentsPage.tsx";
+import { FacultyPage } from "./pages/catalog/FacultyPage.tsx";
 
 function DashboardPage() {
   const { user, signOut } = useAuth();
 
+  const links = [
+    { to: "/catalog/buildings", label: "Buildings" },
+    { to: "/catalog/floors", label: "Floors" },
+    { to: "/catalog/classrooms", label: "Classrooms" },
+    { to: "/catalog/departments", label: "Departments" },
+    { to: "/catalog/faculty", label: "Faculty" },
+  ];
+
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-3xl">
+    <main className="min-h-screen bg-slate-50 px-4 py-8">
+      <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">QRoute Admin</h1>
@@ -32,12 +46,22 @@ function DashboardPage() {
           </button>
         </header>
 
+        <nav className="mt-6 flex flex-wrap gap-2">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
         <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-medium text-slate-900">Dashboard</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Catalog management screens will be added in the next plan. Buildings,
-            floors, classrooms, departments and faculty can be created through the
-            API; this shell exists to prove authentication and role gating.
+            Use the navigation above to manage buildings, floors, classrooms, departments and faculty.
           </p>
         </section>
       </div>
@@ -52,6 +76,46 @@ const routes: RouteObject[] = [
     element: (
       <RequireAdmin>
         <DashboardPage />
+      </RequireAdmin>
+    ),
+  },
+  {
+    path: "/catalog/buildings",
+    element: (
+      <RequireAdmin>
+        <BuildingsPage />
+      </RequireAdmin>
+    ),
+  },
+  {
+    path: "/catalog/floors",
+    element: (
+      <RequireAdmin>
+        <FloorsPage />
+      </RequireAdmin>
+    ),
+  },
+  {
+    path: "/catalog/classrooms",
+    element: (
+      <RequireAdmin>
+        <ClassroomsPage />
+      </RequireAdmin>
+    ),
+  },
+  {
+    path: "/catalog/departments",
+    element: (
+      <RequireAdmin>
+        <DepartmentsPage />
+      </RequireAdmin>
+    ),
+  },
+  {
+    path: "/catalog/faculty",
+    element: (
+      <RequireAdmin>
+        <FacultyPage />
       </RequireAdmin>
     ),
   },
