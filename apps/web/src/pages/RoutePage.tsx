@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getShortestPath } from "../api/routing.ts";
+import { getGraphSnapshot } from "../api/graph.ts";
+import { MapView } from "../components/MapView.tsx";
 
 export function RoutePage() {
   const navigate = useNavigate();
@@ -9,9 +11,16 @@ export function RoutePage() {
   const [loading, setLoading] = useState(false);
   const [route, setRoute] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [graphData, setGraphData] = useState<any>(null);
 
   const origin = state?.origin || state?.location;
   const destination = state?.destination;
+
+  useEffect(() => {
+    getGraphSnapshot()
+      .then((data) => setGraphData(data))
+      .catch((err) => console.error("Failed to load graph", err));
+  }, []);
 
   useEffect(() => {
     if (origin && destination && !route && !loading) {
@@ -43,6 +52,8 @@ export function RoutePage() {
   function startNavigation() {
     navigate("/guide", { state: { route, origin, destination, destinationInfo: state?.destinationInfo } });
   }
+
+  const floors = graphData?.floors || [];
 
   return (
     <main className="min-h-screen bg-[#f8f9ff] px-4 py-6">
@@ -98,6 +109,8 @@ export function RoutePage() {
 
           {route && (
             <>
+              <MapView route={route} floors={floors} />
+
               <div className="rounded-lg border border-[#d0e4ff] bg-white p-4">
                 <h2 className="text-sm font-medium text-[#061d30] mb-2">Route Summary</h2>
                 <div className="flex justify-between text-sm">
