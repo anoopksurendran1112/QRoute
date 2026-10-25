@@ -1,6 +1,32 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { getGraphSnapshot } from "../api/graph.ts";
+import { getCachedGraphSnapshot, saveGraphSnapshot } from "../utils/cache.ts";
 
 export function HomePage() {
+  useEffect(() => {
+    // Preload graph snapshot
+    const cached = getCachedGraphSnapshot();
+    if (cached?.data) {
+      // Use cached data, but still try to refresh in background
+      getGraphSnapshot()
+        .then((data) => {
+          if (data.revision && data.revision !== cached.revision) {
+            saveGraphSnapshot(data, data.revision);
+          } else if (!cached.revision && data) {
+            saveGraphSnapshot(data, data.revision);
+          }
+        })
+        .catch(() => {});
+    } else {
+      getGraphSnapshot()
+        .then((data) => {
+          saveGraphSnapshot(data, data.revision);
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#f8f9ff] px-4 py-10">
       <div className="mx-auto max-w-md">
