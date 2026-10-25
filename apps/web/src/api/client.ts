@@ -3,21 +3,12 @@ const getApiBase = () => {
   if ((import.meta as any).env?.VITE_API_BASE) {
     return (import.meta as any).env.VITE_API_BASE;
   }
-  // For mobile devices on same network, use the current hostname
-  if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    // If running on localhost, try localhost:8080 (API port)
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8080';
-    }
-    // Try same hostname with port 8080
-    return `${protocol}//${hostname}:8080`;
-  }
-  return "http://localhost:8080";
+  // Use relative path for dev/proxy or same origin
+  return "";
 };
 
 const API_BASE = getApiBase();
-console.log('API Base URL:', API_BASE);
+console.log('API Base URL:', API_BASE || '(relative)');
 
 async function postJson(path: string, body: unknown) {
   try {

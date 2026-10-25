@@ -21,6 +21,7 @@ export function ScanPage() {
     setResolving(true);
     setError(null);
     try {
+      console.log('Resolving token:', t, 'to API:', (api as any).API_BASE);
       const data = await api.postJson("/v1/scan/resolve", { token: t });
       console.log('Scan resolved:', data);
       navigate("/route", { state: { origin: data.location || data.node, token: t } });

@@ -1,15 +1,20 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: "./tests",
-  timeout: 60_000,
-  expect: { timeout: 15_000 },
-  fullyParallel: false,
-  workers: 1,
-  reporter: [["list"]],
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
   use: {
-    baseURL: process.env.ADMIN_URL ?? "http://localhost:5173",
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
+    baseURL: 'http://localhost:5174',
+    trace: 'on-first-retry',
   },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
 });

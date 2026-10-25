@@ -1,0 +1,5 @@
+$path = "D:\DemoProjects\deepak\packages\shared\src\index.ts"
+Add-Content -Path $path -Value ""
+Add-Content -Path $path -Value "export * from './schemas/scan.ts';"
+Add-Content -Path $path -Value "export * from './schemas/navigation.ts';"
+Write-Host "done"
