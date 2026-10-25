@@ -14,7 +14,7 @@ export function RoutePage() {
   const [graphData, setGraphData] = useState<any>(null);
 
   const origin = state?.origin || state?.location;
-  const destination = state?.destination;
+  const destination = state?.destinationNode || state?.destination;
 
   useEffect(() => {
     getGraphSnapshot()
@@ -34,9 +34,10 @@ export function RoutePage() {
     try {
       // Try to get node IDs from origin/destination
       const fromNodeId = origin?.nodeId || origin?.node?.id || origin?.id;
-      const toNodeId = destination?.nodeId || destination?.node?.id || destination?.id;
+      const toNodeId = destination?.nodeId || destination?.node?.id || destination?.id || destination?._id;
 
       if (!fromNodeId || !toNodeId) {
+        console.error('Missing node info:', { origin, destination });
         throw new Error("Missing node information");
       }
 
@@ -88,7 +89,7 @@ export function RoutePage() {
                 <div className="flex-1">
                   <p className="text-xs text-[#707880]">To</p>
                   <p className="text-sm text-[#061d30]">
-                    {destination?.name || destination?.roomNumber || state?.destinationInfo?.classroom?.roomNumber || "Destination"}
+                    {destination?.label || destination?.name || destination?.roomNumber || state?.destinationInfo?.classroom?.roomNumber || state?.destinationInfo?.node?.label || "Destination"}
                   </p>
                 </div>
               </div>
