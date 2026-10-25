@@ -22,8 +22,10 @@ export function ScanPage() {
     setError(null);
     try {
       const data = await api.postJson("/v1/scan/resolve", { token: t });
-      navigate("/route", { state: { origin: data.location, token: t } });
+      console.log('Scan resolved:', data);
+      navigate("/route", { state: { origin: data.location || data.node, token: t } });
     } catch (e) {
+      console.error('Scan resolve error:', e);
       setError((e as Error).message);
     } finally {
       setResolving(false);
@@ -40,21 +42,37 @@ export function ScanPage() {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText: string) => {
-          await scanner.stop();
-          setScanning(false);
-          // Try to extract token from QR payload or use as-is
-          let t = decodedText.trim();
-          // If it's a URL, try to get last segment
-          if (t.includes("/")) {
-            const parts = t.split("/");
-            t = parts[parts.length - 1];
+          try {
+            await scanner.stop();
+            setScanning(false);
+            // Try to extract token from QR payload or use as-is
+            let t = decodedText.trim();
+            console.log('Scanned QR:', t);
+            // If it's a URL, try to get last segment or query param
+            if (t.includes("/")) {
+              const parts = t.split("/");
+              t = parts[parts.length - 1];
+              // Remove query params if any
+              if (t.includes("?")) {
+                t = t.split("?")[0];
+              }
+            }
+            // If it contains token= extract it
+            if (t.includes("token=")) {
+              const match = t.match(/token=([^&]+)/);
+              if (match) t = match[1];
+            }
+            await resolveToken(t);
+          } catch (err) {
+            console.error('Error processing scan:', err);
+            setError((err as Error).message);
           }
-          await resolveToken(t);
         },
         () => {},
       );
     } catch (e) {
-      setError((e as Error).message);
+      console.error('Scanner start error:', e);
+      setError((e as Error).message || 'Failed to start camera');
       setScanning(false);
     }
   }
@@ -81,7 +99,7 @@ export function ScanPage() {
         </header>
 
         <div className="rounded-lg border border-[#d0e4ff] bg-white shadow-sm overflow-hidden">
-          <div id="qr-reader" className="w-full" />
+          <div id="qr-reader" className="w-full min-h-[250px]" />
           {!scanning && !resolving && !token && (
             <div className="p-6 text-center">
               <button

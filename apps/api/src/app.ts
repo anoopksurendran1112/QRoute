@@ -34,7 +34,7 @@ export function createApp(): express.Express {
 
   app.disable("x-powered-by");
   app.use(helmet());
-  app.use(cors({ origin: config.corsOrigin, credentials: false }));
+  app.use(cors({ origin: true, credentials: false }));
   app.use(express.json({ limit: "1mb" }));
   app.use(pinoHttp({ logger }));
 

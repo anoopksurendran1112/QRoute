@@ -1,33 +1,39 @@
 import { api } from "./client.ts";
 
+async function fetchJson(path: string) {
+  try {
+    const res = await fetch(`${api.API_BASE}${path}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `Failed to fetch ${path}`);
+    }
+    return res.json();
+  } catch (e) {
+    if ((e as Error).message.includes('Failed to fetch')) {
+      throw new Error(`Network error: Unable to connect to ${api.API_BASE}. Make sure API is running.`);
+    }
+    throw e;
+  }
+}
+
 export async function getBuildings() {
-  const res = await fetch(`${api.API_BASE}/v1/catalog/buildings`);
-  if (!res.ok) throw new Error("Failed to fetch buildings");
-  return res.json();
+  return fetchJson("/v1/catalog/buildings");
 }
 
 export async function getFloors() {
-  const res = await fetch(`${api.API_BASE}/v1/catalog/floors`);
-  if (!res.ok) throw new Error("Failed to fetch floors");
-  return res.json();
+  return fetchJson("/v1/catalog/floors");
 }
 
 export async function getClassrooms() {
-  const res = await fetch(`${api.API_BASE}/v1/catalog/classrooms`);
-  if (!res.ok) throw new Error("Failed to fetch classrooms");
-  return res.json();
+  return fetchJson("/v1/catalog/classrooms");
 }
 
 export async function getDepartments() {
-  const res = await fetch(`${api.API_BASE}/v1/catalog/departments`);
-  if (!res.ok) throw new Error("Failed to fetch departments");
-  return res.json();
+  return fetchJson("/v1/catalog/departments");
 }
 
 export async function getFaculty() {
-  const res = await fetch(`${api.API_BASE}/v1/catalog/faculty`);
-  if (!res.ok) throw new Error("Failed to fetch faculty");
-  return res.json();
+  return fetchJson("/v1/catalog/faculty");
 }
 
 export async function getAllCatalogData() {

@@ -6,6 +6,7 @@ export function SearchPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>({
     buildings: [],
     floors: [],
@@ -16,11 +17,16 @@ export function SearchPage() {
 
   useEffect(() => {
     getAllCatalogData()
-      .then(setData)
-      .catch((err) => console.error(err))
+      .then((result) => {
+        console.log('Catalog data loaded:', result);
+        setData(result);
+      })
+      .catch((err) => {
+        console.error('Failed to load catalog:', err);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   }, []);
-
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
@@ -94,9 +100,29 @@ export function SearchPage() {
           <div className="rounded-lg border border-[#d0e4ff] bg-white p-6 text-center">
             <p className="text-sm text-[#707880]">Loading...</p>
           </div>
+        ) : error ? (
+          <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+            <p className="text-sm text-red-700">{error}</p>
+            <button
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                getAllCatalogData()
+                  .then((result) => setData(result))
+                  .catch((err) => setError(err.message))
+                  .finally(() => setLoading(false));
+              }}
+              className="mt-2 text-xs text-red-700 underline"
+            >
+              Retry
+            </button>
+          </div>
         ) : query.trim() === "" ? (
           <div className="rounded-lg border border-[#d0e4ff] bg-white p-6 text-center">
             <p className="text-sm text-[#707880]">Start typing to search for classrooms</p>
+            <p className="text-xs text-[#a0a4a8] mt-1">
+              {data.classrooms.length} classrooms available
+            </p>
           </div>
         ) : results.length === 0 ? (
           <div className="rounded-lg border border-[#d0e4ff] bg-white p-6 text-center">
