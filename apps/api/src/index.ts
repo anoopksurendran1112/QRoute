@@ -6,8 +6,9 @@ import { disconnectPrisma } from "./lib/prisma.ts";
 // before a socket is opened.
 const app = createApp();
 
-const server = app.listen(config.port, () => {
-  console.log(`QRoute API listening on http://127.0.0.1:${config.port}`);
+const server = app.listen(config.port, '0.0.0.0', () => {
+  console.log(`QRoute API listening on http://0.0.0.0:${config.port}`);
+  console.log(`Local: http://localhost:${config.port}`);
 });
 
 let shuttingDown = false;
