@@ -4,11 +4,10 @@ import {
   Navigate,
   Route,
   Routes,
-  Link,
   type RouteObject,
 } from "react-router-dom";
 import { RequireAdmin } from "./auth/RequireAdmin.tsx";
-import { useAuth } from "./auth/AuthProvider.tsx";
+import { AdminLayout } from "./components/AdminLayout.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
 import { BuildingsPage } from "./pages/catalog/BuildingsPage.tsx";
 import { FloorsPage } from "./pages/catalog/FloorsPage.tsx";
@@ -18,56 +17,80 @@ import { FacultyPage } from "./pages/catalog/FacultyPage.tsx";
 import { GraphEditorPage } from "./pages/GraphEditorPage.tsx";
 
 function DashboardPage() {
-  const { user, signOut } = useAuth();
-
-  const links = [
-    { to: "/catalog/buildings", label: "Buildings" },
-    { to: "/catalog/floors", label: "Floors" },
-    { to: "/catalog/classrooms", label: "Classrooms" },
-    { to: "/catalog/departments", label: "Departments" },
-    { to: "/catalog/faculty", label: "Faculty" },
-    { to: "/graph-editor", label: "Graph Editor" },
-  ];
-
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-5xl">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">QRoute Admin</h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Signed in as {user?.email} ({user?.role})
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={signOut}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
-          >
-            Sign out
-          </button>
-        </header>
-
-        <nav className="mt-6 flex flex-wrap gap-2">
-          {links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-medium text-slate-900">Dashboard</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Use the navigation above to manage buildings, floors, classrooms, departments and faculty.
-          </p>
-        </section>
+    <AdminLayout>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-[#061d30] mb-2" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+          Dashboard
+        </h1>
+        <p className="text-sm text-[#40484f]">
+          Welcome to QRoute Admin - Campus Navigation Management System
+        </p>
       </div>
-    </main>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="rounded-lg border border-[#d0e4ff] bg-white p-4 shadow-[0_1px_3px_0_rgba(11,25,44,0.04)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#525f75]">Buildings</p>
+              <p className="text-2xl font-semibold text-[#061d30] mt-1">-</p>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-[#e0f2fe] flex items-center justify-center text-lg">
+              🏢
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-[#d0e4ff] bg-white p-4 shadow-[0_1px_3px_0_rgba(11,25,44,0.04)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#525f75]">Floors</p>
+              <p className="text-2xl font-semibold text-[#061d30] mt-1">-</p>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-[#f0fdf4] flex items-center justify-center text-lg">
+              🏗️
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-[#d0e4ff] bg-white p-4 shadow-[0_1px_3px_0_rgba(11,25,44,0.04)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#525f75]">Nodes</p>
+              <p className="text-2xl font-semibold text-[#061d30] mt-1">-</p>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-[#fefce8] flex items-center justify-center text-lg">
+              📍
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-[#d0e4ff] bg-white p-4 shadow-[0_1px_3px_0_rgba(11,25,44,0.04)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#525f75]">QR Codes</p>
+              <p className="text-2xl font-semibold text-[#061d30] mt-1">-</p>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-[#f3e8ff] flex items-center justify-center text-lg">
+              📱
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section className="rounded-lg border border-[#d0e4ff] bg-white shadow-[0_1px_3px_0_rgba(11,25,44,0.04)]">
+        <div className="border-b border-[#d0e4ff] px-6 py-4">
+          <h3 className="text-lg font-semibold text-[#061d30]" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+            System Overview
+          </h3>
+          <p className="mt-1 text-sm text-[#40484f]">
+            QR-based indoor navigation system for campus wayfinding
+          </p>
+        </div>
+        <div className="px-6 py-4">
+          <p className="text-sm text-[#40484f]">
+            Use the sidebar to manage campus infrastructure, configure the navigation graph, and generate QR codes for wayfinding.
+          </p>
+        </div>
+      </section>
+    </AdminLayout>
   );
 }
 
@@ -85,7 +108,9 @@ const routes: RouteObject[] = [
     path: "/catalog/buildings",
     element: (
       <RequireAdmin>
-        <BuildingsPage />
+        <AdminLayout>
+          <BuildingsPage />
+        </AdminLayout>
       </RequireAdmin>
     ),
   },
@@ -93,7 +118,9 @@ const routes: RouteObject[] = [
     path: "/catalog/floors",
     element: (
       <RequireAdmin>
-        <FloorsPage />
+        <AdminLayout>
+          <FloorsPage />
+        </AdminLayout>
       </RequireAdmin>
     ),
   },
@@ -101,7 +128,9 @@ const routes: RouteObject[] = [
     path: "/catalog/classrooms",
     element: (
       <RequireAdmin>
-        <ClassroomsPage />
+        <AdminLayout>
+          <ClassroomsPage />
+        </AdminLayout>
       </RequireAdmin>
     ),
   },
@@ -109,7 +138,9 @@ const routes: RouteObject[] = [
     path: "/catalog/departments",
     element: (
       <RequireAdmin>
-        <DepartmentsPage />
+        <AdminLayout>
+          <DepartmentsPage />
+        </AdminLayout>
       </RequireAdmin>
     ),
   },
@@ -117,7 +148,9 @@ const routes: RouteObject[] = [
     path: "/catalog/faculty",
     element: (
       <RequireAdmin>
-        <FacultyPage />
+        <AdminLayout>
+          <FacultyPage />
+        </AdminLayout>
       </RequireAdmin>
     ),
   },
@@ -125,7 +158,9 @@ const routes: RouteObject[] = [
     path: "/graph-editor",
     element: (
       <RequireAdmin>
-        <GraphEditorPage />
+        <AdminLayout>
+          <GraphEditorPage />
+        </AdminLayout>
       </RequireAdmin>
     ),
   },

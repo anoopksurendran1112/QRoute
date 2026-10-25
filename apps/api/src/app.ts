@@ -10,6 +10,9 @@ import { authRouter } from "./modules/auth/router.ts";
 import { catalogRouter } from "./modules/catalog/router.ts";
 import { graphRouter } from "./modules/graph/router.ts";
 import { qrRouter } from "./modules/qr/router.ts";
+import { scanRouter } from "./modules/scan/router.ts";
+import { navigationRouter } from "./modules/navigation/router.ts";
+import { monitoringRouter } from "./modules/monitoring/router.ts";
 import { routingRouter } from "./modules/routing/router.ts";
 import { adminRouter } from "./routes/admin.ts";
 import { healthRouter } from "./routes/health.ts";
@@ -54,6 +57,9 @@ export function createApp(): express.Express {
   app.use("/v1/routes", routingRouter);
   app.use("/v1/graph", graphRouter);
   app.use("/v1/qr", qrRouter);
+  app.use("/v1/scan", scanRouter);
+  app.use("/v1/navigation", navigationRouter);
+  app.use("/v1/monitoring", monitoringRouter);
   app.use("/v1", catalogRouter);
 
   // Unknown /v1 route. Anything outside /v1 falls through to Express's default.

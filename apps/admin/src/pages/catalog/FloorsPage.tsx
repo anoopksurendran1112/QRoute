@@ -69,53 +69,76 @@ export function FloorsPage() {
   }));
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-6xl">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Floors</h1>
-            <p className="mt-1 text-sm text-slate-600">Manage floor calibration (meters per pixel).</p>
+    <div>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-[#061d30]" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+            Floors
+          </h1>
+          <p className="mt-1 text-sm text-[#40484f]">Manage floor calibration (meters per pixel).</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => { setEditRow(null); setServerError(null); setFormOpen(true); }}
+          className="rounded-md bg-[#006699] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#004b72] focus:outline-none focus:ring-2 focus:ring-[#006699]/30"
+        >
+          + New floor
+        </button>
+      </header>
+
+      {(formOpen && !editRow) || editRow ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#d0e4ff] px-6 py-4 sticky top-0 bg-white">
+              <h2 className="text-lg font-semibold text-[#061d30]" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+                {editRow ? "Edit floor" : "New floor"}
+              </h2>
+              <button
+                onClick={() => {
+                  setFormOpen(false);
+                  setEditRow(null);
+                  setServerError(null);
+                }}
+                className="text-[#707880] hover:text-[#061d30]"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-4">
+              {editRow ? (
+                <EntityForm config={floorConfig} mode="edit" initialValues={{ buildingId: editRow.buildingId, level: editRow.level, name: editRow.name ?? "", metersPerPixel: editRow.metersPerPixel, widthPx: editRow.widthPx ?? "", heightPx: editRow.heightPx ?? "", imagePath: editRow.imagePath ?? "" }} buildings={buildingsQuery.data ?? []} isPending={updateMutation.isPending} serverError={serverError} onSubmit={async (values) => { await (updateMutation.mutateAsync as any)({ id: editRow.id, input: values }); }} onCancel={() => { setEditRow(null); setServerError(null); }} />
+              ) : (
+                <EntityForm config={floorConfig} mode="create" buildings={buildingsQuery.data ?? []} isPending={createMutation.isPending} serverError={serverError} onSubmit={async (values) => { await (createMutation.mutateAsync as any)(values); }} onCancel={() => { setFormOpen(false); setServerError(null); }} />
+              )}
+            </div>
           </div>
-          <button type="button" onClick={() => { setEditRow(null); setServerError(null); setFormOpen(true); }} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white">
-            New floor
-          </button>
-        </header>
+        </div>
+      ) : null}
 
-        {formOpen && !editRow ? (
-          <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-medium text-slate-900">New floor</h2>
-            <div className="mt-4">
-              <EntityForm config={floorConfig} mode="create" buildings={buildingsQuery.data ?? []} isPending={createMutation.isPending} serverError={serverError} onSubmit={async (values) => { await (createMutation.mutateAsync as any)(values); }} onCancel={() => { setFormOpen(false); setServerError(null); }} />
-            </div>
-          </section>
-        ) : null}
-
-        {editRow ? (
-          <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-medium text-slate-900">Edit floor</h2>
-            <div className="mt-4">
-              <EntityForm config={floorConfig} mode="edit" initialValues={{ buildingId: editRow.buildingId, level: editRow.level, name: editRow.name ?? "", metersPerPixel: editRow.metersPerPixel, widthPx: editRow.widthPx ?? "", heightPx: editRow.heightPx ?? "", imagePath: editRow.imagePath ?? "" }} buildings={buildingsQuery.data ?? []} isPending={updateMutation.isPending} serverError={serverError} onSubmit={async (values) => { await (updateMutation.mutateAsync as any)({ id: editRow.id, input: values }); }} onCancel={() => { setEditRow(null); setServerError(null); }} />
-            </div>
-          </section>
-        ) : null}
-
-        <section className="mt-6">
-          <EntityTable
-            config={floorConfig}
-            rows={rows}
-            isLoading={listQuery.isLoading}
-            onEdit={(row) => {
-              setEditRow(row as unknown as FloorDto);
-              setFormOpen(false);
-              setServerError(null);
-            }}
-            onDelete={(row) => {
-              setDeleteRow(row as unknown as FloorDto);
-              setDeleteError(null);
-            }}
-          />
-        </section>
-      </div>
+      <section className="rounded-lg border border-[#d0e4ff] bg-white shadow-[0_1px_3px_0_rgba(11,25,44,0.04)] overflow-hidden">
+        <div className="border-b border-[#d0e4ff] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#061d30]" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+            Floor List
+          </h2>
+          <p className="mt-1 text-sm text-[#40484f]">All floors across buildings</p>
+        </div>
+        <EntityTable
+          config={floorConfig}
+          rows={rows}
+          isLoading={listQuery.isLoading}
+          onEdit={(row) => {
+            setEditRow(row as unknown as FloorDto);
+            setFormOpen(false);
+            setServerError(null);
+          }}
+          onDelete={(row) => {
+            setDeleteRow(row as unknown as FloorDto);
+            setDeleteError(null);
+          }}
+        />
+      </section>
 
       <ConfirmDelete
         open={deleteRow !== null}
@@ -130,6 +153,6 @@ export function FloorsPage() {
           setDeleteError(null);
         }}
       />
-    </main>
+    </div>
   );
 }

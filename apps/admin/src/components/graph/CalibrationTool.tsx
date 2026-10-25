@@ -27,58 +27,61 @@ export function CalibrationTool({ floorId, currentMetersPerPixel }: { floorId: s
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <h3 className="text-sm font-medium text-slate-900">Calibration</h3>
-      <p className="mt-1 text-xs text-slate-600">Set meters per pixel</p>
-      
-      <div className="mt-3 space-y-2">
+    <section className="rounded-lg border border-[#d0e4ff] bg-white shadow-[0_1px_3px_0_rgba(11,25,44,0.04)]">
+      <div className="border-b border-[#d0e4ff] px-4 py-2.5 bg-[#f8f9ff]">
+        <h3 className="text-sm font-semibold text-[#061d30]" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+          Calibration
+        </h3>
+        <p className="text-xs text-[#40484f]">Set scale for distance calculations</p>
+      </div>
+      <div className="p-4 space-y-2.5">
         <div>
-          <label className="block text-xs text-slate-600">Known distance (meters)</label>
+          <label className="block text-xs font-medium text-[#061d30] mb-1">Known distance (meters)</label>
           <input
             type="number"
             step="0.1"
             value={distanceM}
             onChange={(e) => setDistanceM(e.target.value)}
-            className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+            className="w-full rounded-md border border-[#c0c7d0] px-2.5 py-1.5 text-xs text-[#061d30] focus:border-[#006699] focus:outline-none focus:ring-1 focus:ring-[#006699]/20"
             placeholder="e.g., 5.0"
           />
         </div>
         <div>
-          <label className="block text-xs text-slate-600">Pixel distance</label>
+          <label className="block text-xs font-medium text-[#061d30] mb-1">Pixel distance</label>
           <input
             type="number"
             value={pixelDistance}
             onChange={(e) => setPixelDistance(e.target.value)}
-            className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+            className="w-full rounded-md border border-[#c0c7d0] px-2.5 py-1.5 text-xs text-[#061d30] focus:border-[#006699] focus:outline-none focus:ring-1 focus:ring-[#006699]/20"
             placeholder="Measure on canvas"
           />
         </div>
         <button
           type="button"
           onClick={calculate}
-          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+          className="w-full rounded-md border border-[#c0c7d0] px-2.5 py-1.5 text-xs text-[#40484f] transition-colors hover:bg-[#f5f7fa]"
         >
           Calculate
         </button>
         <div>
-          <label className="block text-xs text-slate-600">Meters per pixel</label>
+          <label className="block text-xs font-medium text-[#061d30] mb-1">Meters per pixel</label>
           <input
             type="number"
             step="0.000001"
             value={metersPerPixel}
             onChange={(e) => setMetersPerPixel(e.target.value)}
-            className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+            className="w-full rounded-md border border-[#c0c7d0] px-2.5 py-1.5 text-xs text-[#061d30] focus:border-[#006699] focus:outline-none focus:ring-1 focus:ring-[#006699]/20"
           />
         </div>
         <button
           type="button"
           onClick={() => mutation.mutate(Number(metersPerPixel))}
           disabled={!metersPerPixel || mutation.isPending}
-          className="w-full rounded bg-blue-600 text-white px-2 py-1 text-xs disabled:opacity-50"
+          className="w-full rounded-md bg-[#006699] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#004b72] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {mutation.isPending ? "Saving..." : "Save Calibration"}
         </button>
       </div>
-    </div>
+    </section>
   );
 }

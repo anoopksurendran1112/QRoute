@@ -36,42 +36,65 @@ export function DepartmentsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Departments</h1>
-            <p className="mt-1 text-sm text-slate-600">Manage departments and linked faculty/classrooms.</p>
+    <div>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-[#061d30]" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+            Departments
+          </h1>
+          <p className="mt-1 text-sm text-[#40484f]">Manage departments and linked faculty/classrooms.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => { setEditRow(null); setServerError(null); setFormOpen(true); }}
+          className="rounded-md bg-[#006699] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#004b72] focus:outline-none focus:ring-2 focus:ring-[#006699]/30"
+        >
+          + New department
+        </button>
+      </header>
+
+      {(formOpen && !editRow) || editRow ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#d0e4ff] px-6 py-4">
+              <h2 className="text-lg font-semibold text-[#061d30]" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+                {editRow ? "Edit department" : "New department"}
+              </h2>
+              <button
+                onClick={() => {
+                  setFormOpen(false);
+                  setEditRow(null);
+                  setServerError(null);
+                }}
+                className="text-[#707880] hover:text-[#061d30]"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-4">
+              {editRow ? (
+                <EntityForm config={departmentConfig} mode="edit" initialValues={editRow as any} isPending={updateMutation.isPending} serverError={serverError} onSubmit={async (values) => { await updateMutation.mutateAsync({ id: editRow.id, input: values as any }); }} onCancel={() => { setEditRow(null); setServerError(null); }} />
+              ) : (
+                <EntityForm config={departmentConfig} mode="create" isPending={createMutation.isPending} serverError={serverError} onSubmit={async (values) => { await createMutation.mutateAsync(values as any); }} onCancel={() => { setFormOpen(false); setServerError(null); }} />
+              )}
+            </div>
           </div>
-          <button type="button" onClick={() => { setEditRow(null); setServerError(null); setFormOpen(true); }} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white">
-            New department
-          </button>
-        </header>
+        </div>
+      ) : null}
 
-        {formOpen && !editRow ? (
-          <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-medium text-slate-900">New department</h2>
-            <div className="mt-4">
-              <EntityForm config={departmentConfig} mode="create" isPending={createMutation.isPending} serverError={serverError} onSubmit={async (values) => { await createMutation.mutateAsync(values as any); }} onCancel={() => { setFormOpen(false); setServerError(null); }} />
-            </div>
-          </section>
-        ) : null}
-
-        {editRow ? (
-          <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-medium text-slate-900">Edit department</h2>
-            <div className="mt-4">
-              <EntityForm config={departmentConfig} mode="edit" initialValues={editRow as any} isPending={updateMutation.isPending} serverError={serverError} onSubmit={async (values) => { await updateMutation.mutateAsync({ id: editRow.id, input: values as any }); }} onCancel={() => { setEditRow(null); setServerError(null); }} />
-            </div>
-          </section>
-        ) : null}
-
-        <section className="mt-6">
-          <EntityTable config={departmentConfig} rows={(listQuery.data ?? []) as any} isLoading={listQuery.isLoading} onEdit={(row) => { setEditRow(row as unknown as DepartmentDto); setFormOpen(false); setServerError(null); }} onDelete={(row) => { setDeleteRow(row as unknown as DepartmentDto); setDeleteError(null); }} />
-        </section>
-      </div>
+      <section className="rounded-lg border border-[#d0e4ff] bg-white shadow-[0_1px_3px_0_rgba(11,25,44,0.04)] overflow-hidden">
+        <div className="border-b border-[#d0e4ff] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#061d30]" style={{ fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif' }}>
+            Department List
+          </h2>
+          <p className="mt-1 text-sm text-[#40484f]">All departments in the campus</p>
+        </div>
+        <EntityTable config={departmentConfig} rows={(listQuery.data ?? []) as any} isLoading={listQuery.isLoading} onEdit={(row) => { setEditRow(row as unknown as DepartmentDto); setFormOpen(false); setServerError(null); }} onDelete={(row) => { setDeleteRow(row as unknown as DepartmentDto); setDeleteError(null); }} />
+      </section>
 
       <ConfirmDelete open={deleteRow !== null} recordLabel={deleteRow ? `${deleteRow.code} — ${deleteRow.name}` : ""} isPending={deleteMutation.isPending} error={deleteError} onConfirm={() => { if (deleteRow) deleteMutation.mutate(deleteRow.id); }} onCancel={() => { setDeleteRow(null); setDeleteError(null); }} />
-    </main>
+    </div>
   );
 }

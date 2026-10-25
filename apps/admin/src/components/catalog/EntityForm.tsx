@@ -93,11 +93,11 @@ export function EntityForm({
 
         if (field.type === "select") {
           return (
-            <label key={field.name} className="flex flex-col gap-1 text-sm text-slate-700">
-              {field.label}
+            <label key={field.name} className="flex flex-col gap-2 text-sm">
+              <span className="font-medium text-[#061d30]">{field.label}</span>
               <select
                 {...register(field.name)}
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="rounded-md border border-[#c0c7d0] px-3 py-2 text-sm text-[#061d30] focus:border-[#006699] focus:outline-none focus:ring-1 focus:ring-[#006699]/20"
               >
                 <option value="">Select...</option>
                 {options.map((option) => (
@@ -109,41 +109,43 @@ export function EntityForm({
               {error?.message ? (
                 <span className="text-xs text-red-600">{String(error.message)}</span>
               ) : null}
-              {field.helpText ? <span className="text-xs text-slate-500">{field.helpText}</span> : null}
+              {field.helpText ? <span className="text-xs text-[#707880]">{field.helpText}</span> : null}
             </label>
           );
         }
 
         return (
-          <label key={field.name} className="flex flex-col gap-1 text-sm text-slate-700">
-            {field.label}
+          <label key={field.name} className="flex flex-col gap-2 text-sm">
+            <span className="font-medium text-[#061d30]">{field.label}</span>
             <input
               type={field.type}
               {...register(field.name, {
                 setValueAs: field.type === "number" ? (v) => (v === "" || v === null ? undefined : v) : undefined,
               })}
               placeholder={field.placeholder}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-md border border-[#c0c7d0] px-3 py-2 text-sm text-[#061d30] placeholder:text-[#707880] focus:border-[#006699] focus:outline-none focus:ring-1 focus:ring-[#006699]/20"
             />
             {error?.message ? (
               <span className="text-xs text-red-600">{String(error.message)}</span>
             ) : null}
-            {field.helpText ? <span className="text-xs text-slate-500">{field.helpText}</span> : null}
+            {field.helpText ? <span className="text-xs text-[#707880]">{field.helpText}</span> : null}
           </label>
         );
       })}
 
       {serverError ? (
-        <p role="alert" className="text-sm text-red-600">
-          {serverError}
-        </p>
+        <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2">
+          <p role="alert" className="text-sm text-[#ba1a1a]">
+            {serverError}
+          </p>
+        </div>
       ) : null}
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 pt-2">
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="flex-1 rounded-md bg-[#006699] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#004b72] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isPending ? "Saving…" : mode === "create" ? "Create" : "Save"}
         </button>
@@ -151,7 +153,7 @@ export function EntityForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700"
+            className="rounded-md border border-[#c0c7d0] px-4 py-2 text-sm text-[#40484f] transition-colors hover:bg-[#f5f7fa]"
           >
             Cancel
           </button>

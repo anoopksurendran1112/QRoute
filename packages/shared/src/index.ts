@@ -8,3 +8,6 @@ export * from "./schemas/auth.ts";
 export * from "./schemas/catalog.ts";
 export * from "./schemas/routing.ts";
 export * from "./schemas/graph.ts";
+
+export * from './schemas/scan.ts';
+export * from './schemas/navigation.ts';

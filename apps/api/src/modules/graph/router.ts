@@ -18,6 +18,7 @@ import {
 } from "./service.ts";
 import { validateFloorGraph } from "./validation.ts";
 import type { ZodType } from "zod";
+import { prisma } from "../../lib/prisma.ts";
 
 export const graphRouter = Router();
 
@@ -101,4 +102,24 @@ graphRouter.patch("/edges/:id", requireAuth, requireRole("admin"), async (req, r
 graphRouter.delete("/edges/:id", requireAuth, requireRole("admin"), async (req, res) => {
   await deleteEdge(req.params.id as string);
   res.status(204).send();
+});
+
+graphRouter.get("/snapshot", requireAuth, async (_req, res) => {
+  const [buildings, floors, nodes, edges] = await Promise.all([
+    prisma.building.findMany({ orderBy: { code: "asc" } }),
+    prisma.floor.findMany({ include: { building: true }, orderBy: [{ buildingId: "asc" }, { level: "asc" }] }),
+    prisma.node.findMany({ orderBy: [{ floorId: "asc" }, { code: "asc" }] }),
+    prisma.edge.findMany({ orderBy: [{ fromNodeId: "asc" }] }),
+  ]);
+
+  const generatedAt = new Date().toISOString();
+
+  res.status(200).json({
+    graphRevision: generatedAt,
+    generatedAt,
+    buildings,
+    floors,
+    nodes,
+    edges,
+  });
 });

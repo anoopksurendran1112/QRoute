@@ -30,50 +30,50 @@ export function EntityTable({
   onDelete,
 }: EntityTableProps) {
   if (isLoading) {
-    return <div className="text-sm text-slate-500">Loading...</div>;
+    return <div className="px-6 py-8 text-center text-sm text-[#707880]">Loading...</div>;
   }
 
   if (rows.length === 0) {
-    return <div className="text-sm text-slate-500">No records yet.</div>;
+    return <div className="px-6 py-8 text-center text-sm text-[#707880]">No records yet.</div>;
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-50">
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-[#d0e4ff] text-sm">
+        <thead className="bg-[#f8f9ff]">
           <tr>
             {config.columns.map((column) => (
               <th
                 key={column.key}
-                className="px-4 py-2 text-left font-medium text-slate-600"
+                className="px-6 py-3 text-left text-xs font-medium text-[#525f75] uppercase tracking-wider"
               >
                 {column.label}
               </th>
             ))}
-            <th className="px-4 py-2 text-right font-medium text-slate-600">Actions</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-[#525f75] uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200 bg-white">
+        <tbody className="divide-y divide-[#d0e4ff] bg-white">
           {rows.map((row) => {
             const id = row[config.idField];
             return (
-              <tr key={String(id)}>
+              <tr key={String(id)} className="hover:bg-[#f8f9ff]/50 transition-colors">
                 {config.columns.map((column) => (
-                  <td key={column.key} className="px-4 py-2 text-slate-700">
+                  <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-[#061d30]">
                     {column.key === "entranceNodeId"
                       ? row[column.key]
-                        ? "Yes"
-                        : "No"
+                        ? <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span>
+                        : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">No</span>
                       : getCellValue(row, column.key)}
                   </td>
                 ))}
-                <td className="px-4 py-2 text-right">
-                  <div className="flex justify-end gap-2">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                  <div className="flex justify-end gap-3">
                     {onEdit ? (
                       <button
                         type="button"
                         onClick={() => onEdit(row)}
-                        className="text-sm text-slate-700 underline"
+                        className="text-[#006699] hover:text-[#004b72] font-medium"
                       >
                         Edit
                       </button>
@@ -82,7 +82,7 @@ export function EntityTable({
                       <button
                         type="button"
                         onClick={() => onDelete(row)}
-                        className="text-sm text-red-600 underline"
+                        className="text-red-600 hover:text-red-700 font-medium"
                       >
                         Delete
                       </button>

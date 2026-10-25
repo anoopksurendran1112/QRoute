@@ -75,6 +75,7 @@ export type ApiErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "RATE_LIMITED"
+  | "INVALID_QR"
   | "INTERNAL";
 
 export interface ApiErrorBody {

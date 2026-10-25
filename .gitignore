@@ -62,3 +62,6 @@ apps/admin/dist/
 apps/api/src/generated/
 packages/shared/dist/
 apps/admin/dist/
+# MCP configuration (project-local)
+.opencode/mcp.json
+.opencode/stitch-mcp.json

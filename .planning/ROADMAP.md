@@ -5,7 +5,7 @@
 - [ ] **Phase 1: Foundation & Data Model** - Monorepo setup, auth/roles, synthetic campus seed, core schema
 - [x] **Phase 2: Graph Core & Routing Engine** - Dijkstra/A* pathfinding, turn-by-turn generation, metre calibration (complete)
 - [ ] **Phase 3: Graph Authoring & Validation** - Admin graph editor, validation, QR code generation
-- [ ] **Phase 4: API & QR System** - Routes, signed tokens, scan resolution, sessions/monitoring
+- [x] **Phase 4: API & QR System** - Routes, signed tokens, scan resolution, sessions/monitoring
 - [ ] **Phase 5: Mobile App** - Scanner, search, map renderer, guidance UI
 
 ## Phase Details
@@ -61,7 +61,8 @@ Plans:
   1. User can scan a QR code and have their current location identified via signed tokens
   2. System records navigation sessions and scan events for usage monitoring
   3. API degrades gracefully when graph is cached for offline scenarios  
-**Plans**: TBD
+**Plans**: 1/1  
+**Status:** Complete (2026-10-25)
 
 ### Phase 5: Mobile App
 **Goal**: Deliver the complete mobile experience with search, interactive map, and checkpoint-based guidance  
@@ -81,5 +82,5 @@ Plans:
 | 1. Foundation & Data Model | 7/7 | Complete | 2026-10-24 |
 | 2. Graph Core & Routing Engine | 5/5 | Complete | 2026-10-24 |
 | 3. Graph Authoring & Validation | 1/1 | Complete | 2026-10-24 |
-| 4. API & QR System | 0/0 | Not started | - |
+| 4. API & QR System | 1/1 | Complete | 2026-10-25 |
 | 5. Mobile App | 0/0 | Not started | - |

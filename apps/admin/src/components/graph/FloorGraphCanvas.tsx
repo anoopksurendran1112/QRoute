@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   MiniMap,
@@ -69,6 +69,8 @@ function CanvasInner({ floorId }: { floorId: string }) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const reactFlow = useReactFlow();
 
@@ -224,13 +226,60 @@ function CanvasInner({ floorId }: { floorId: string }) {
     [updateNodeMutation],
   );
 
+  const toggleExpand = useCallback(async () => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await element.requestFullscreen?.();
+        setIsExpanded(true);
+      } else {
+        await document.exitFullscreen?.();
+        setIsExpanded(false);
+      }
+    } catch {
+      // Fallback to in-page expanded view if fullscreen not supported
+      setIsExpanded((prev) => !prev);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsExpanded(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isExpanded) {
+        setIsExpanded(false);
+        document.exitFullscreen?.();
+      }
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isExpanded]);
+
+  useEffect(() => {
+    if (isExpanded) {
+      // Small delay to allow layout to settle
+      setTimeout(() => {
+        reactFlow.fitView({ padding: 0.1 });
+      }, 100);
+    }
+  }, [isExpanded, reactFlow]);
+
   if (isLoading) {
-    return <div className="h-[600px] flex items-center justify-center text-sm text-slate-500">Loading graph…</div>;
+    return <div className={`${isExpanded ? "h-screen" : "h-[400px]"} flex items-center justify-center text-sm text-slate-500`}>Loading graph…</div>;
   }
 
   if (isError) {
     return (
-      <div className="h-[600px] flex items-center justify-center text-sm text-red-600">
+      <div className={`${isExpanded ? "h-screen" : "h-[400px]"} flex items-center justify-center text-sm text-red-600`}>
         Failed to load graph: {(error as Error).message}
       </div>
     );
@@ -240,7 +289,7 @@ function CanvasInner({ floorId }: { floorId: string }) {
   const selectedEdge = selectedEdgeId ? edges.find((e) => e.id === selectedEdgeId) ?? null : null;
 
   return (
-    <div className="h-[600px] relative">
+    <div ref={containerRef} data-graph-container className={`${isExpanded ? "fixed inset-0 z-[9999] h-screen w-screen bg-[#f8f9ff]" : "h-[400px]"} relative`}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -263,22 +312,38 @@ function CanvasInner({ floorId }: { floorId: string }) {
         maxZoom={4}
         fitView
         proOptions={{ hideAttribution: true }}
+        style={{ background: "#f8f9ff" }}
       >
         <Controls />
         <MiniMap pannable zoomable />
         <Background gap={16} size={1} />
         <Panel position="top-left">
-          <div className="rounded bg-white/95 px-2 py-1 text-xs text-slate-700 shadow">
+          <div className="rounded-md bg-white/95 px-2 py-1 text-xs text-[#061d30] shadow border border-[#d0e4ff]">
             Click canvas to add a node · Drag between handles to add an edge · Drag nodes to move
             {graph?.metersPerPixel
               ? ` · Auto-cost (${graph.metersPerPixel} m/px)`
               : " · No calibration: cost = px / 100"}
           </div>
         </Panel>
-        {status && (
-          <Panel position="top-right">
-            <div className="rounded bg-slate-900/90 px-2 py-1 text-xs text-white shadow">{status}</div>
-          </Panel>
+        <Panel position="bottom-left">
+          {status && (
+            <div className="rounded-md bg-[#061d30]/90 px-2 py-1 text-xs text-white shadow">{status}</div>
+          )}
+        </Panel>
+        {isExpanded && (
+          <div className="absolute top-2 right-2 z-[10000]">
+            <button
+              type="button"
+              onClick={toggleExpand}
+              className="rounded-md bg-white px-3 py-1.5 text-xs font-medium text-[#061d30] shadow-lg border border-[#d0e4ff] hover:bg-[#f8f9ff] transition-colors flex items-center gap-1"
+              title="Exit fullscreen"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+              </svg>
+              Exit Full View (Esc)
+            </button>
+          </div>
         )}
       </ReactFlow>
 
