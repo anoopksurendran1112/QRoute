@@ -6,16 +6,18 @@ const getApiBase = () => {
   // For mobile devices on same network, use the current hostname
   if (typeof window !== 'undefined') {
     const { protocol, hostname } = window.location;
-    // If running on localhost, try localhost:4000, else use same host:4000
+    // If running on localhost, try localhost:8080 (API port)
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:4000';
+      return 'http://localhost:8080';
     }
-    return `${protocol}//${hostname}:4000`;
+    // Try same hostname with port 8080
+    return `${protocol}//${hostname}:8080`;
   }
-  return "http://localhost:4000";
+  return "http://localhost:8080";
 };
 
 const API_BASE = getApiBase();
+console.log('API Base URL:', API_BASE);
 
 async function postJson(path: string, body: unknown) {
   try {

@@ -104,7 +104,7 @@ graphRouter.delete("/edges/:id", requireAuth, requireRole("admin"), async (req, 
   res.status(204).send();
 });
 
-graphRouter.get("/snapshot", requireAuth, async (_req, res) => {
+graphRouter.get("/snapshot", async (_req, res) => {
   const [buildings, floors, nodes, edges] = await Promise.all([
     prisma.building.findMany({ orderBy: { code: "asc" } }),
     prisma.floor.findMany({ include: { building: true }, orderBy: [{ buildingId: "asc" }, { level: "asc" }] }),

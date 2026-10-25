@@ -8,7 +8,7 @@ import { computeRoute } from "./service.ts";
 
 export const routingRouter = Router();
 
-routingRouter.post("/compute", requireAuth, async (req, res) => {
+routingRouter.post("/compute", async (req, res) => {
   const parsed = routeComputeSchema.safeParse(req.body);
   if (!parsed.success) {
     throw new ApiError(

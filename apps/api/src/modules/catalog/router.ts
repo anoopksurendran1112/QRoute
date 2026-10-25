@@ -89,11 +89,11 @@ function queryString(req: Request, name: string): string | undefined {
 
 // ── Buildings ───────────────────────────────────────────────────────────────
 
-catalogRouter.get("/buildings", requireAuth, async (_req, res) => {
+catalogRouter.get("/buildings", async (_req, res) => {
   res.status(200).json({ buildings: await listBuildings() });
 });
 
-catalogRouter.get("/buildings/:id", requireAuth, async (req, res) => {
+catalogRouter.get("/buildings/:id", async (req, res) => {
   res.status(200).json({ building: await getBuilding(routeId(req)) });
 });
 
@@ -114,13 +114,13 @@ catalogRouter.delete("/buildings/:id", requireAuth, requireRole("admin"), async 
 
 // ── Floors ──────────────────────────────────────────────────────────────────
 
-catalogRouter.get("/floors", requireAuth, async (req, res) => {
+catalogRouter.get("/floors", async (req, res) => {
   res.status(200).json({
     floors: await listFloors({ buildingId: queryString(req, "buildingId") }),
   });
 });
 
-catalogRouter.get("/floors/:id", requireAuth, async (req, res) => {
+catalogRouter.get("/floors/:id", async (req, res) => {
   res.status(200).json({ floor: await getFloor(routeId(req)) });
 });
 
@@ -141,7 +141,7 @@ catalogRouter.delete("/floors/:id", requireAuth, requireRole("admin"), async (re
 
 // ── Classrooms ──────────────────────────────────────────────────────────────
 
-catalogRouter.get("/classrooms", requireAuth, async (req, res) => {
+catalogRouter.get("/classrooms", async (req, res) => {
   res.status(200).json({
     classrooms: await listClassrooms({
       floorId: queryString(req, "floorId"),
@@ -151,7 +151,7 @@ catalogRouter.get("/classrooms", requireAuth, async (req, res) => {
   });
 });
 
-catalogRouter.get("/classrooms/:id", requireAuth, async (req, res) => {
+catalogRouter.get("/classrooms/:id", async (req, res) => {
   res.status(200).json({ classroom: await getClassroom(routeId(req)) });
 });
 
@@ -172,11 +172,11 @@ catalogRouter.delete("/classrooms/:id", requireAuth, requireRole("admin"), async
 
 // ── Departments ─────────────────────────────────────────────────────────────
 
-catalogRouter.get("/departments", requireAuth, async (_req, res) => {
+catalogRouter.get("/departments", async (_req, res) => {
   res.status(200).json({ departments: await listDepartments() });
 });
 
-catalogRouter.get("/departments/:id", requireAuth, async (req, res) => {
+catalogRouter.get("/departments/:id", async (req, res) => {
   res.status(200).json({ department: await getDepartment(routeId(req)) });
 });
 
@@ -197,13 +197,13 @@ catalogRouter.delete("/departments/:id", requireAuth, requireRole("admin"), asyn
 
 // ── Faculty ─────────────────────────────────────────────────────────────────
 
-catalogRouter.get("/faculty", requireAuth, async (req, res) => {
+catalogRouter.get("/faculty", async (req, res) => {
   res.status(200).json({
     faculty: await listFaculty({ departmentId: queryString(req, "departmentId") }),
   });
 });
 
-catalogRouter.get("/faculty/:id", requireAuth, async (req, res) => {
+catalogRouter.get("/faculty/:id", async (req, res) => {
   res.status(200).json({ faculty: await getFaculty(routeId(req)) });
 });
 
