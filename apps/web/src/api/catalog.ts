@@ -10,30 +10,30 @@ async function fetchJson(path: string) {
     return res.json();
   } catch (e) {
     if ((e as Error).message.includes('Failed to fetch')) {
-      throw new Error(`Network error: Unable to connect to ${api.API_BASE}. Make sure API is running.`);
+      throw new Error(`Network error: Unable to connect to ${api.API_BASE || 'server'}. Make sure API is running.`);
     }
     throw e;
   }
 }
 
 export async function getBuildings() {
-  return fetchJson("/v1/catalog/buildings");
+  return fetchJson("/v1/buildings");
 }
 
 export async function getFloors() {
-  return fetchJson("/v1/catalog/floors");
+  return fetchJson("/v1/floors");
 }
 
 export async function getClassrooms() {
-  return fetchJson("/v1/catalog/classrooms");
+  return fetchJson("/v1/classrooms");
 }
 
 export async function getDepartments() {
-  return fetchJson("/v1/catalog/departments");
+  return fetchJson("/v1/departments");
 }
 
 export async function getFaculty() {
-  return fetchJson("/v1/catalog/faculty");
+  return fetchJson("/v1/faculty");
 }
 
 export async function getAllCatalogData() {
