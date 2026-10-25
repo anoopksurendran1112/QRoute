@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllCatalogData } from "../api/catalog.ts";
+import { getGraphSnapshot } from "../api/graph.ts";
 
 export function SearchPage() {
   const navigate = useNavigate();
@@ -14,15 +15,21 @@ export function SearchPage() {
     departments: [],
     faculty: [],
   });
+  const [graph, setGraph] = useState<any>({ nodes: [], edges: [], buildings: [], floors: [] });
 
   useEffect(() => {
-    getAllCatalogData()
-      .then((result) => {
-        console.log('Catalog data loaded:', result);
-        setData(result);
+    Promise.all([
+      getAllCatalogData(),
+      getGraphSnapshot().catch(() => ({ nodes: [], edges: [], buildings: [], floors: [] })),
+    ])
+      .then(([catalog, graphData]) => {
+        console.log('Catalog data loaded:', catalog);
+        console.log('Graph data loaded:', graphData);
+        setData(catalog);
+        setGraph(graphData);
       })
       .catch((err) => {
-        console.error('Failed to load catalog:', err);
+        console.error('Failed to load data:', err);
         setError(err.message);
       })
       .finally(() => setLoading(false));
@@ -31,9 +38,10 @@ export function SearchPage() {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
     const { classrooms = [], buildings = [], floors = [], departments = [], faculty = [] } = data || {};
+    const { nodes = [] } = graph || {};
 
     try {
-      return classrooms
+      const classroomResults = classrooms
         .filter((c: any) => {
           const building = buildings.find((b: any) => b.id === c.buildingId);
           const floor = floors.find((f: any) => f.id === c.floorId);
@@ -56,22 +64,51 @@ export function SearchPage() {
           const floor = floors.find((f: any) => f.id === c.floorId);
           const dept = departments.find((d: any) => d.id === c.departmentId);
           const fac = faculty.find((f: any) => f.id === c.facultyId);
-          return { classroom: c, building, floor, department: dept, faculty: fac };
+          return { type: 'classroom', classroom: c, building, floor, department: dept, faculty: fac };
+        });
+
+      const nodeResults = nodes
+        .filter((n: any) => {
+          const building = buildings.find((b: any) => b.id === n.buildingId);
+          const floor = floors.find((f: any) => f.id === n.floorId);
+          return (
+            n.label?.toLowerCase().includes(q) ||
+            n.code?.toLowerCase().includes(q) ||
+            n.name?.toLowerCase().includes(q) ||
+            building?.name?.toLowerCase().includes(q) ||
+            floor?.name?.toLowerCase().includes(q)
+          );
         })
-        .slice(0, 20);
+        .map((n: any) => {
+          const building = buildings.find((b: any) => b.id === n.buildingId);
+          const floor = floors.find((f: any) => f.id === n.floorId);
+          return { type: 'node', node: n, building, floor };
+        });
+
+      return [...classroomResults, ...nodeResults].slice(0, 30);
     } catch (e) {
       console.error('Search error:', e);
       return [];
     }
-  }, [query, data]);
+  }, [query, data, graph]);
 
   function selectDestination(result: any) {
-    navigate("/route", {
-      state: {
-        destination: result.classroom,
-        destinationInfo: result,
-      },
-    });
+    if (result.type === 'node') {
+      navigate("/route", {
+        state: {
+          destinationNode: result.node,
+          destination: result.node,
+          destinationInfo: result,
+        },
+      });
+    } else {
+      navigate("/route", {
+        state: {
+          destination: result.classroom,
+          destinationInfo: result,
+        },
+      });
+    }
   }
 
   return (
@@ -143,14 +180,28 @@ export function SearchPage() {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="font-medium text-[#061d30]">
-                      {result.classroom.roomNumber || result.classroom.name}
-                    </p>
-                    <p className="text-sm text-[#40484f] mt-0.5">
-                      {result.building?.name} • {result.floor?.name}
-                    </p>
-                    {result.department && (
-                      <p className="text-xs text-[#707880] mt-1">{result.department.name}</p>
+                    {result.type === 'node' ? (
+                      <>
+                        <p className="font-medium text-[#061d30]">
+                          {result.node.label || result.node.code}
+                        </p>
+                        <p className="text-sm text-[#40484f] mt-0.5">
+                          {result.building?.name} • {result.floor?.name}
+                        </p>
+                        <p className="text-xs text-[#707880] mt-1 capitalize">{result.node.kind}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-medium text-[#061d30]">
+                          {result.classroom.roomNumber || result.classroom.name}
+                        </p>
+                        <p className="text-sm text-[#40484f] mt-0.5">
+                          {result.building?.name} • {result.floor?.name}
+                        </p>
+                        {result.department && (
+                          <p className="text-xs text-[#707880] mt-1">{result.department.name}</p>
+                        )}
+                      </>
                     )}
                   </div>
                   <svg className="h-5 w-5 text-[#707880] mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
