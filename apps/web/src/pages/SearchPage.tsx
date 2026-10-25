@@ -30,34 +30,39 @@ export function SearchPage() {
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    const { classrooms, buildings, floors, departments, faculty } = data;
+    const { classrooms = [], buildings = [], floors = [], departments = [], faculty = [] } = data || {};
 
-    return classrooms
-      .filter((c: any) => {
-        const building = buildings.find((b: any) => b.id === c.buildingId);
-        const floor = floors.find((f: any) => f.id === c.floorId);
-        const dept = departments.find((d: any) => d.id === c.departmentId);
-        const fac = faculty.find((f: any) => f.id === c.facultyId);
+    try {
+      return classrooms
+        .filter((c: any) => {
+          const building = buildings.find((b: any) => b.id === c.buildingId);
+          const floor = floors.find((f: any) => f.id === c.floorId);
+          const dept = departments.find((d: any) => d.id === c.departmentId);
+          const fac = faculty.find((f: any) => f.id === c.facultyId);
 
-        return (
-          c.roomNumber?.toLowerCase().includes(q) ||
-          c.name?.toLowerCase().includes(q) ||
-          building?.name?.toLowerCase().includes(q) ||
-          building?.code?.toLowerCase().includes(q) ||
-          floor?.name?.toLowerCase().includes(q) ||
-          floor?.level?.toString().includes(q) ||
-          dept?.name?.toLowerCase().includes(q) ||
-          fac?.name?.toLowerCase().includes(q)
-        );
-      })
-      .map((c: any) => {
-        const building = buildings.find((b: any) => b.id === c.buildingId);
-        const floor = floors.find((f: any) => f.id === c.floorId);
-        const dept = departments.find((d: any) => d.id === c.departmentId);
-        const fac = faculty.find((f: any) => f.id === c.facultyId);
-        return { classroom: c, building, floor, department: dept, faculty: fac };
-      })
-      .slice(0, 20);
+          return (
+            c.roomNumber?.toLowerCase().includes(q) ||
+            c.name?.toLowerCase().includes(q) ||
+            building?.name?.toLowerCase().includes(q) ||
+            building?.code?.toLowerCase().includes(q) ||
+            floor?.name?.toLowerCase().includes(q) ||
+            floor?.level?.toString().includes(q) ||
+            dept?.name?.toLowerCase().includes(q) ||
+            fac?.name?.toLowerCase().includes(q)
+          );
+        })
+        .map((c: any) => {
+          const building = buildings.find((b: any) => b.id === c.buildingId);
+          const floor = floors.find((f: any) => f.id === c.floorId);
+          const dept = departments.find((d: any) => d.id === c.departmentId);
+          const fac = faculty.find((f: any) => f.id === c.facultyId);
+          return { classroom: c, building, floor, department: dept, faculty: fac };
+        })
+        .slice(0, 20);
+    } catch (e) {
+      console.error('Search error:', e);
+      return [];
+    }
   }, [query, data]);
 
   function selectDestination(result: any) {
