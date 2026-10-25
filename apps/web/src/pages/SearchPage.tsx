@@ -25,7 +25,14 @@ export function SearchPage() {
       .then(([catalog, graphData]) => {
         console.log('Catalog data loaded:', catalog);
         console.log('Graph data loaded:', graphData);
-        setData(catalog);
+        // Normalize catalog data
+        setData({
+          buildings: catalog.buildings || [],
+          floors: catalog.floors || [],
+          classrooms: catalog.classrooms || [],
+          departments: catalog.departments || [],
+          faculty: catalog.faculty || [],
+        });
         setGraph(graphData);
       })
       .catch((err) => {
@@ -37,8 +44,12 @@ export function SearchPage() {
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    const { classrooms = [], buildings = [], floors = [], departments = [], faculty = [] } = data || {};
-    const { nodes = [] } = graph || {};
+    const classrooms = Array.isArray(data?.classrooms) ? data.classrooms : [];
+    const buildings = Array.isArray(data?.buildings) ? data.buildings : [];
+    const floors = Array.isArray(data?.floors) ? data.floors : [];
+    const departments = Array.isArray(data?.departments) ? data.departments : [];
+    const faculty = Array.isArray(data?.faculty) ? data.faculty : [];
+    const nodes = Array.isArray(graph?.nodes) ? graph.nodes : [];
 
     try {
       const classroomResults = classrooms
