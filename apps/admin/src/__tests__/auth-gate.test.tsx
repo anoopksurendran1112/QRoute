@@ -137,11 +137,13 @@ describe("auth gate", () => {
     fireEvent.click(screen.getByRole("button", { name: /Sign in/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Dashboard/i)).toBeTruthy();
+      // The sidebar also renders a "Dashboard" nav item, so assert on the page
+      // heading rather than any text node.
+      expect(screen.getByRole("heading", { name: "Dashboard" })).toBeTruthy();
     });
 
     expect(screen.getByText(/admin@sjcet.local/i)).toBeTruthy();
-    expect(screen.getByText(/\(admin\)/i)).toBeTruthy();
+    expect(screen.getByText(/^admin$/i)).toBeTruthy();
 
     const loginCall = fetchCalls.find((call) => call.url.includes("/auth/login"));
     expect(loginCall?.init?.method).toBe("POST");
