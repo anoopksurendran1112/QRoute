@@ -10,6 +10,12 @@ export interface RoutingNode {
   kind: "junction" | "door" | "stair" | "lift" | "entrance";
   code: string;
   label?: string | null;
+  /**
+   * Metres per stored pixel for the node's floor. `x`/`y` are pixel
+   * coordinates; edge `costM` values are metres. Without this the A* heuristic
+   * would compare pixels against metres and stop being admissible.
+   */
+  metersPerPixel?: number;
 }
 
 export interface RoutingEdge {
@@ -25,6 +31,12 @@ export interface RoutingEdge {
 export interface RoutingGraph {
   nodes: Map<string, RoutingNode>;
   adjacency: Map<string, RoutingEdge[]>;
+  /**
+   * Metres of walking cost per metre of plan distance, derived from the graph's
+   * own edges. Multiplying plan distance by this keeps the A* heuristic
+   * admissible no matter how edge costs were authored (see `computeHeuristicScale`).
+   */
+  heuristicScale: number;
 }
 
 export interface RouteMetrics {

@@ -15,7 +15,7 @@ describe("Navigation sessions", () => {
     const res = await request(testApp)
       .post("/v1/navigation/sessions")
       .set("Authorization", `Bearer ${user.token}`)
-      .send({ startNodeId: nodes[0].id, endNodeId: nodes[1].id, algorithm: "astar" });
+      .send({ startNodeId: nodes[0]!.id, endNodeId: nodes[1]!.id, algorithm: "astar" });
     expect(res.status).toBe(201);
     const sessionId = res.body.session?.id;
     expect(sessionId).toBeDefined();

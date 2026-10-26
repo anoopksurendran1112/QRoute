@@ -1,7 +1,18 @@
-// Turn-by-turn direction generation
+// Turn-by-turn direction generation.
+//
+// Two unit traps live here and are both handled explicitly:
+//   * node `x`/`y` are pixels, edge `costM` is metres — segment distances must
+//     come from the edge cost (or pixels x metersPerPixel), never raw pixels;
+//   * only junctions/stair heads/lifts are decision points. Turning at a door
+//     node produces noise, so turns are emitted at junctions and floor changes.
 
-import { getNode } from "./graph.ts";
-import type { RouteInstruction, RoutingGraph } from "./types.ts";
+import { getNeighbors, getNode } from "./graph.ts";
+import type { RouteInstruction, RoutingGraph, RoutingNode } from "./types.ts";
+
+/** Below this heading change the walk counts as "straight on". */
+const TURN_THRESHOLD_DEG = 20;
+/** Above this heading change the walk counts as doubling back. */
+const UTURN_THRESHOLD_DEG = 160;
 
 function calculateBearing(x1: number, y1: number, x2: number, y2: number): number {
   const dx = x2 - x1;
@@ -9,136 +20,140 @@ function calculateBearing(x1: number, y1: number, x2: number, y2: number): numbe
   return Math.atan2(dy, dx) * (180 / Math.PI);
 }
 
-function getTurnDirection(bearing1: number, bearing2: number): "straight" | "turn" {
-  let diff = bearing2 - bearing1;
+/** Signed heading change in degrees, normalised to (-180, 180]. */
+function bearingDelta(from: RoutingNode, via: RoutingNode, to: RoutingNode): number {
+  const incoming = calculateBearing(from.x, from.y, via.x, via.y);
+  const outgoing = calculateBearing(via.x, via.y, to.x, to.y);
+  let diff = outgoing - incoming;
   while (diff > 180) diff -= 360;
-  while (diff < -180) diff += 360;
-  
-  if (Math.abs(diff) < 20) return "straight";
-  return "turn";
+  while (diff <= -180) diff += 360;
+  return diff;
 }
 
-function getTurnText(diff: number): string {
-  if (diff > 20 && diff < 160) return "Turn right";
-  if (diff < -20 && diff > -160) return "Turn left";
-  if (diff >= 160 || diff <= -160) return "Make a U-turn";
-  return "Continue straight";
+function turnText(diff: number): string | undefined {
+  const magnitude = Math.abs(diff);
+  if (magnitude < TURN_THRESHOLD_DEG) return undefined;
+  if (magnitude >= UTURN_THRESHOLD_DEG) return "Make a U-turn";
+  return diff > 0 ? "Turn right" : "Turn left";
+}
+
+/**
+ * Length of the walk between two adjacent nodes, in metres.
+ *
+ * The stored edge cost is authoritative; the pixel geometry is only a fallback
+ * for a pair whose edge cannot be found.
+ */
+function segmentLengthM(graph: RoutingGraph, from: RoutingNode, to: RoutingNode): number {
+  const edge = getNeighbors(graph, from.id).find((candidate) => candidate.to === to.id);
+  if (edge) return edge.costM;
+
+  const scale = from.metersPerPixel ?? to.metersPerPixel ?? 0;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  return Math.sqrt(dx * dx + dy * dy) * scale;
+}
+
+/** Junctions, stair heads and lifts are where a user has to choose a direction. */
+function isDecisionPoint(node: RoutingNode): boolean {
+  return node.kind === "junction" || node.kind === "stair" || node.kind === "lift";
+}
+
+function locateInstruction(
+  node: RoutingNode,
+  text: string,
+  kind: RouteInstruction["type"],
+  distanceM: number,
+): RouteInstruction {
+  return {
+    step: 0, // renumbered below so callers always get a contiguous sequence
+    type: kind,
+    text,
+    distanceM,
+    nodeId: node.id,
+    floorId: node.floorId || "",
+    floorLevel: node.level,
+  };
 }
 
 export function generateDirections(graph: RoutingGraph, path: string[]): RouteInstruction[] {
   if (path.length === 0) return [];
-  if (path.length === 1) {
-    const p0 = path[0];
-    if (p0 === undefined) return [];
-    const node = getNode(graph, p0);
-    if (!node) return [];
+
+  const nodes: RoutingNode[] = [];
+  for (const id of path) {
+    const node = getNode(graph, id);
+    if (node) nodes.push(node);
+  }
+  if (nodes.length === 0) return [];
+
+  const startNode = nodes[0]!;
+
+  if (nodes.length === 1) {
     return [
-      {
-        step: 1,
-        type: "start",
-        text: `Start at ${node.code}${node.label ? ` (${node.label})` : ""}`,
-        distanceM: 0,
-        nodeId: p0,
-        floorId: node.floorId || "",
-        floorLevel: node.level,
-      },
-      {
-        step: 2,
-        type: "arrive",
-        text: `You are at your starting location`,
-        distanceM: 0,
-        nodeId: p0,
-        floorId: node.floorId || "",
-        floorLevel: node.level,
-      },
-    ];
+      locateInstruction(
+        startNode,
+        `Start at ${startNode.code}${startNode.label ? ` (${startNode.label})` : ""}`,
+        "start",
+        0,
+      ),
+      locateInstruction(startNode, "You are at your starting location", "arrive", 0),
+    ].map((instruction, index) => ({ ...instruction, step: index + 1 }));
   }
 
-  const instructions: RouteInstruction[] = [];
-  let step = 1;
-  let totalDistance = 0;
+  const instructions: RouteInstruction[] = [
+    locateInstruction(
+      startNode,
+      `Start at ${startNode.code}${startNode.label ? ` (${startNode.label})` : ""} on Floor ${startNode.level}`,
+      "start",
+      0,
+    ),
+  ];
 
-  // Start instruction
-  const startNodeId = path[0];
-  if (startNodeId === undefined) return instructions;
-  const startNode = getNode(graph, startNodeId);
-  instructions.push({
-    step: step++,
-    type: "start",
-    text: `Start at ${startNode?.code || startNodeId}${startNode?.label ? ` (${startNode.label})` : ""} on Floor ${startNode?.level ?? 0}`,
-    distanceM: 0,
-    nodeId: startNodeId,
-    floorId: startNode?.floorId || "",
-    floorLevel: startNode?.level ?? 0,
-  });
+  let segmentM = 0;
+  let totalM = 0;
 
-  let currentFloor = startNode?.level ?? 0;
-  let currentFloorId = startNode?.floorId ?? "";
-  let segmentStart = 0;
-  let segmentDistance = 0;
+  for (let i = 1; i < nodes.length; i++) {
+    const prev = nodes[i - 1]!;
+    const curr = nodes[i]!;
+    const next = nodes[i + 1];
 
-  for (let i = 1; i < path.length; i++) {
-    const prevNodeId = path[i - 1];
-    const currNodeId = path[i];
-    if (prevNodeId === undefined || currNodeId === undefined) continue;
-    const prevNode = getNode(graph, prevNodeId);
-    const currNode = getNode(graph, currNodeId);
-    if (!prevNode || !currNode) continue;
+    const walkedM = segmentLengthM(graph, prev, curr);
+    segmentM += walkedM;
+    totalM += walkedM;
 
-    // Check if floor changed
-    if (currNode.level !== currentFloor || currNode.floorId !== currentFloorId) {
-      // Add floor change instruction
-      totalDistance += segmentDistance;
-      const isStair = currNode.kind === "stair" || prevNode.kind === "stair";
-      const isLift = currNode.kind === "lift" || prevNode.kind === "lift";
-      instructions.push({
-        step: step++,
-        type: "floor_change",
-        text: `Take ${isStair ? "stairs" : isLift ? "lift" : "stairs/lift"} to Floor ${currNode.level}`,
-        distanceM: segmentDistance,
-        nodeId: currNodeId,
-        floorId: currNode.floorId || "",
-        floorLevel: currNode.level,
-      });
-      
-      currentFloor = currNode.level;
-      currentFloorId = currNode.floorId;
-      segmentStart = i;
-      segmentDistance = 0;
+    const floorChanged = curr.level !== prev.level || curr.floorId !== prev.floorId;
+
+    if (floorChanged) {
+      const usesStair = curr.kind === "stair" || prev.kind === "stair";
+      const usesLift = curr.kind === "lift" || prev.kind === "lift";
+      const conveyance = usesLift ? "lift" : usesStair ? "stairs" : "stairs or lift";
+      instructions.push(
+        locateInstruction(curr, `Take the ${conveyance} to Floor ${curr.level}`, "floor_change", segmentM),
+      );
+      segmentM = 0;
       continue;
     }
 
-    // Calculate distance for this edge
-    const dx = currNode.x - prevNode.x;
-    const dy = currNode.y - prevNode.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    segmentDistance += dist;
+    // A turn only exists if the walk continues past this node.
+    if (next && isDecisionPoint(curr)) {
+      const text = turnText(bearingDelta(prev, curr, next));
+      if (text) {
+        instructions.push(
+          locateInstruction(curr, `${text} at ${curr.code}`, "turn", segmentM),
+        );
+        segmentM = 0;
+      }
+    }
   }
 
-  // Add final arrival
-  const endNodeId = path[path.length - 1];
-  if (endNodeId === undefined) return instructions;
-  const endNode = getNode(graph, endNodeId);
-  totalDistance += segmentDistance;
-  if (endNode) {
-    instructions.push({
-      step: step++,
-      type: "arrive",
-      text: `Arrive at ${endNode.code}${endNode.label ? ` (${endNode.label})` : ""} on Floor ${endNode.level}`,
-      distanceM: totalDistance,
-      nodeId: endNodeId,
-      floorId: endNode.floorId,
-      floorLevel: endNode.level,
-    });
-  } else {
-    instructions.push({
-      step: step++,
-      type: "arrive",
-      text: `Arrive at destination`,
-      distanceM: totalDistance,
-      nodeId: endNodeId,
-    });
-  }
+  const endNode = nodes[nodes.length - 1]!;
+  instructions.push(
+    locateInstruction(
+      endNode,
+      `Arrive at ${endNode.code}${endNode.label ? ` (${endNode.label})` : ""} on Floor ${endNode.level}`,
+      "arrive",
+      segmentM > 0 ? segmentM : totalM,
+    ),
+  );
 
-  return instructions;
+  return instructions.map((instruction, index) => ({ ...instruction, step: index + 1 }));
 }

@@ -1,9 +1,12 @@
 // Routing HTTP surface
+//
+// `POST /v1/routes/compute` is intentionally unauthenticated: the web and
+// mobile clients need to compute a route before a student ever logs in.
+// Write access to the graph itself stays behind /v1/admin.
 
 import { routeComputeSchema } from "@qroute/shared";
 import { Router } from "express";
 import { ApiError } from "../../lib/apiError.ts";
-import { requireAuth } from "../../middleware/auth.ts";
 import { computeRoute } from "./service.ts";
 
 export const routingRouter = Router();

@@ -9,11 +9,19 @@ interface MapViewProps {
 }
 
 export function MapView({ route, floors = [], currentFloorId, onFloorChange }: MapViewProps) {
-  const [selectedFloorId, setSelectedFloorId] = useState(currentFloorId || floors[0]?.id);
+  const path = route?.path || route?.nodes || [];
+
+  // Default to the floor the route starts on. Defaulting to `floors[0]` showed
+  // the first floor in the campus, which for a route in another building is a
+  // floor the route never touches — an empty panel with no tab to escape it.
+  const [selectedFloorId, setSelectedFloorId] = useState(
+    currentFloorId || path[0]?.floorId || floors[0]?.id,
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [imageFailed, setImageFailed] = useState(false);
   
   // Zoom and pan state
   const [scale, setScale] = useState(1);
@@ -37,6 +45,23 @@ export function MapView({ route, floors = [], currentFloorId, onFloorChange }: M
   }, [selectedFloorId]);
 
   useEffect(() => {
+    // A floor plan that is missing or fails to load must not hide the route.
+    setImageFailed(false);
+  }, [floorPlanUrl]);
+
+  // The drawing space is the floor's declared pixel grid, not the bitmap's
+  // natural size. Node `x`/`y` and `metersPerPixel` are authored against
+  // `widthPx`/`heightPx`; a plan image that happens to be stored at a different
+  // resolution (or that was replaced after calibration) must be stretched to
+  // that grid, otherwise the route is drawn at the wrong scale and runs off the
+  // panel.
+  const gridSize = {
+    width: currentFloor?.widthPx || imageSize.width || 900,
+    height: currentFloor?.heightPx || imageSize.height || 600,
+  };
+
+
+  useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
         setContainerSize({
@@ -50,7 +75,6 @@ export function MapView({ route, floors = [], currentFloorId, onFloorChange }: M
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  const path = route?.path || route?.nodes || [];
   const instructions = route?.instructions || [];
 
   // Get unique floors from route
@@ -133,29 +157,23 @@ export function MapView({ route, floors = [], currentFloorId, onFloorChange }: M
     setPosition({ x: 0, y: 0 });
   };
 
+  // Returns a point in the container's *untransformed* coordinate space.
+  // The <g> that draws the route applies the same translate/scale as the image
+  // wrapper, so baking zoom/pan in here as well would move the route twice and
+  // desynchronise it from the floor plan on every zoom.
   function getScaledPoint(node: any) {
     const x = node.x ?? node.positionX ?? node.posX ?? node.canvasX ?? node.px ?? 0;
     const y = node.y ?? node.positionY ?? node.posY ?? node.canvasY ?? node.py ?? 0;
     
-    if (!imageSize.width || !imageSize.height || !containerSize.width || !containerSize.height) {
-      const baseX = x * 0.5;
-      const baseY = y * 0.5;
-      return { x: baseX * scale + position.x, y: baseY * scale + position.y };
+    if (!gridSize.width || !gridSize.height || !containerSize.width || !containerSize.height) {
+      return { x: x * 0.5, y: y * 0.5 };
     }
 
-    // Better coordinate scaling - use actual image dimensions
-    const scaleX = containerSize.width / imageSize.width;
-    const scaleY = containerSize.height / imageSize.height;
-    const baseScale = Math.min(scaleX, scaleY);
-    
-    const offsetX = (containerSize.width - imageSize.width * baseScale) / 2;
-    const offsetY = (containerSize.height - imageSize.height * baseScale) / 2;
-    
-    const finalScale = baseScale * scale;
-    
+    // The image is stretched to the same box (`object-fill`), so a plain
+    // per-axis ratio is the exact inverse of that stretch.
     return {
-      x: x * finalScale + offsetX + position.x,
-      y: y * finalScale + offsetY + position.y,
+      x: x * (containerSize.width / gridSize.width),
+      y: y * (containerSize.height / gridSize.height),
     };
   }
 
@@ -195,26 +213,30 @@ export function MapView({ route, floors = [], currentFloorId, onFloorChange }: M
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {floorPlanUrl ? (
+          {floorPlanUrl && !imageFailed ? (
             <img
               ref={imageRef}
               src={floorPlanUrl}
               alt={currentFloor?.name || "Floor plan"}
-              className="w-full h-full object-contain pointer-events-none"
+              className="w-full h-full object-fill pointer-events-none"
               onLoad={(e) => {
                 const img = e.currentTarget;
                 setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
               }}
+              onError={() => setImageFailed(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[#f8f9ff]">
-              <p className="text-sm text-[#707880]">No floor plan available</p>
+            <div className="w-full h-full flex flex-col items-center justify-start pt-3 bg-[#f8f9ff] gap-1">
+              <p className="text-sm text-[#707880]">
+                {floorPlanUrl ? "Floor plan could not be loaded" : "No floor plan uploaded for this level"}
+              </p>
+              <p className="text-xs text-[#a0a8b0]">Route is still shown to scale</p>
             </div>
           )}
         </div>
 
         {/* Route overlay */}
-        {floorPath.length > 1 && imageSize.width > 0 && (
+        {floorPath.length > 1 && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
             <g style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transformOrigin: "center center" }}>
               <polyline
@@ -271,11 +293,21 @@ export function MapView({ route, floors = [], currentFloorId, onFloorChange }: M
           </svg>
         )}
 
-        {/* Zoom controls */}
-        <div className="absolute bottom-2 right-2 flex flex-col gap-1" style={{ zIndex: 20 }}>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className="text-xs text-[#707880]">
+          {floorPath.length === 1
+            ? "You are at this location"
+            : `${Math.max(floorPath.length - 1, 0)} plan segments • drag to pan • scroll or pinch to zoom`}
+        </p>
+
+        {/* Kept outside the map: overlaying them hid whichever marker happened
+            to sit in that corner. */}
+        <div className="flex shrink-0 gap-1">
           <button
             onClick={zoomIn}
-            className="w-8 h-8 bg-white/95 border border-[#c0c7d0] rounded-md flex items-center justify-center hover:bg-white shadow-sm"
+            className="w-8 h-8 bg-white border border-[#c0c7d0] rounded-md flex items-center justify-center hover:bg-[#f5f7fa] shadow-sm"
             title="Zoom in"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,7 +316,7 @@ export function MapView({ route, floors = [], currentFloorId, onFloorChange }: M
           </button>
           <button
             onClick={zoomOut}
-            className="w-8 h-8 bg-white/95 border border-[#c0c7d0] rounded-md flex items-center justify-center hover:bg-white shadow-sm"
+            className="w-8 h-8 bg-white border border-[#c0c7d0] rounded-md flex items-center justify-center hover:bg-[#f5f7fa] shadow-sm"
             title="Zoom out"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -293,7 +325,7 @@ export function MapView({ route, floors = [], currentFloorId, onFloorChange }: M
           </button>
           <button
             onClick={resetZoom}
-            className="w-8 h-8 bg-white/95 border border-[#c0c7d0] rounded-md flex items-center justify-center hover:bg-white shadow-sm"
+            className="w-8 h-8 bg-white border border-[#c0c7d0] rounded-md flex items-center justify-center hover:bg-[#f5f7fa] shadow-sm"
             title="Reset zoom"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,15 +333,6 @@ export function MapView({ route, floors = [], currentFloorId, onFloorChange }: M
             </svg>
           </button>
         </div>
-
-        {/* Route indicator */}
-        {floorPath.length > 0 && (
-          <div className="absolute top-2 left-2 bg-white/95 px-2 py-1 rounded-md shadow-sm border border-[#d0e4ff]" style={{ zIndex: 20 }}>
-            <p className="text-xs text-[#006699] font-medium">
-              {floorPath.length === 1 ? "At location" : `${floorPath.length - 1} segments • Drag to pan • Scroll to zoom`}
-            </p>
-          </div>
-        )}
       </div>
 
       {instructions.length > 0 && (

@@ -6,9 +6,9 @@ import type { RoutingEdge, RoutingNode } from "../types.ts";
 
 function createTestGraph(): ReturnType<typeof buildGraph> {
   const nodes: RoutingNode[] = [
-    { id: "n1", floorId: "f1", buildingId: "b1", level: 0, x: 0, y: 0, kind: "junction", code: "N1" },
-    { id: "n2", floorId: "f1", buildingId: "b1", level: 0, x: 10, y: 0, kind: "junction", code: "N2" },
-    { id: "n3", floorId: "f1", buildingId: "b1", level: 0, x: 20, y: 0, kind: "junction", code: "N3" },
+    { id: "n1", floorId: "f1", buildingId: "b1", level: 0, x: 0, y: 0, kind: "junction", code: "N1", metersPerPixel: 1 },
+    { id: "n2", floorId: "f1", buildingId: "b1", level: 0, x: 10, y: 0, kind: "junction", code: "N2", metersPerPixel: 1 },
+    { id: "n3", floorId: "f1", buildingId: "b1", level: 0, x: 20, y: 0, kind: "junction", code: "N3", metersPerPixel: 1 },
   ];
   const edges: RoutingEdge[] = [
     { id: "e1", from: "n1", to: "n2", costM: 10, kind: "walk", accessible: true, bidirectional: true },
@@ -19,10 +19,10 @@ function createTestGraph(): ReturnType<typeof buildGraph> {
 
 function createMultiFloorGraph(): ReturnType<typeof buildGraph> {
   const nodes: RoutingNode[] = [
-    { id: "n1", floorId: "f0", buildingId: "b1", level: 0, x: 0, y: 0, kind: "entrance", code: "E1" },
-    { id: "s1", floorId: "f0", buildingId: "b1", level: 0, x: 5, y: 0, kind: "stair", code: "S1" },
-    { id: "s2", floorId: "f1", buildingId: "b1", level: 1, x: 5, y: 0, kind: "stair", code: "S2" },
-    { id: "n2", floorId: "f1", buildingId: "b1", level: 1, x: 20, y: 0, kind: "junction", code: "N2" },
+    { id: "n1", floorId: "f0", buildingId: "b1", level: 0, x: 0, y: 0, kind: "entrance", code: "E1", metersPerPixel: 1 },
+    { id: "s1", floorId: "f0", buildingId: "b1", level: 0, x: 5, y: 0, kind: "stair", code: "S1", metersPerPixel: 1 },
+    { id: "s2", floorId: "f1", buildingId: "b1", level: 1, x: 5, y: 0, kind: "stair", code: "S2", metersPerPixel: 1 },
+    { id: "n2", floorId: "f1", buildingId: "b1", level: 1, x: 20, y: 0, kind: "junction", code: "N2", metersPerPixel: 1 },
   ];
   const edges: RoutingEdge[] = [
     { id: "e1", from: "n1", to: "s1", costM: 5, kind: "walk", accessible: true, bidirectional: true },

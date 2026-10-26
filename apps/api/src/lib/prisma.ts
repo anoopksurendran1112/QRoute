@@ -16,6 +16,11 @@ const adapter = new PrismaMariaDb({
   password: dbConnection.password,
   database: dbConnection.database,
   connectionLimit: 5,
+  // MySQL 8 defaults new users to caching_sha2_password. Over a non-TLS socket
+  // the driver must fetch the server's RSA key on first authentication or the
+  // handshake fails with "RSA public key is not available client side". The
+  // container is local and dev-only, so retrieval is acceptable here.
+  allowPublicKeyRetrieval: true,
 });
 
 export const prisma = new PrismaClient({ adapter });

@@ -13,6 +13,14 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Floor plans are served by the API from /uploads. Without this the dev
+      // server answers with index.html, the <img> fails to decode, and the map
+      // renders as an empty white box.
+      '/uploads': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

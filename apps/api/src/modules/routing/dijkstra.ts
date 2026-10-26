@@ -62,8 +62,11 @@ export function findPathDijkstra(
       if (visited.has(edge.to)) continue;
       metrics.relaxations++;
 
-      const newDist = (dist.get(current.nodeId) || Infinity) + edge.costM;
-      if (newDist < (dist.get(edge.to) || Infinity)) {
+      // `??` not `||`: the start node's tentative distance is 0, and `0 || Infinity`
+      // is Infinity. That single character made every edge from the start node
+      // fail its relaxation test, so no path was ever found.
+      const newDist = (dist.get(current.nodeId) ?? Infinity) + edge.costM;
+      if (newDist < (dist.get(edge.to) ?? Infinity)) {
         dist.set(edge.to, newDist);
         prev.set(edge.to, current.nodeId);
         heap.push({ nodeId: edge.to, priority: newDist });
@@ -73,7 +76,7 @@ export function findPathDijkstra(
 
   metrics.maxFrontier = maxFrontier;
 
-  if (!visited.has(endId) && dist.get(endId) === undefined) {
+  if (dist.get(endId) === undefined) {
     metrics.runtimeMs = Date.now() - startTime;
     return {
       found: false,
@@ -107,7 +110,7 @@ export function findPathDijkstra(
     };
   }
 
-  const totalCostM = dist.get(endId) || 0;
+  const totalCostM = dist.get(endId) ?? 0;
   const nodes = path.map((id) => getNode(graph, id)!).filter(Boolean);
   const instructions = generateDirections(graph, path);
 

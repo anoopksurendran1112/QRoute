@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
 import { api } from "../api/client.ts";
+import { saveOrigin } from "../utils/session.ts";
 
 export function ScanPage() {
   const navigate = useNavigate();
@@ -24,7 +25,25 @@ export function ScanPage() {
       console.log('Resolving token:', t, 'to API:', (api as any).API_BASE);
       const data = await api.postJson("/v1/scan/resolve", { token: t });
       console.log('Scan resolved:', data);
-      navigate("/route", { state: { origin: data.location || data.node, token: t } });
+      // `location` is display text ({building, floor, node}); the routable id
+      // lives on `node`. Passing `location` as the origin left the route page
+      // with no start node at all.
+      const origin = {
+        ...data.node,
+        buildingName: data.location?.building,
+        floorName: data.location?.floor,
+      };
+      // Remembered for the tab so Route -> Search -> Route keeps the start.
+      saveOrigin(origin);
+      navigate("/route", {
+        state: {
+          origin,
+          originLocation: data.location,
+          floor: data.floor,
+          building: data.building,
+          token: t,
+        },
+      });
     } catch (e) {
       console.error('Scan resolve error:', e);
       setError((e as Error).message);

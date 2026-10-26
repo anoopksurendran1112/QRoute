@@ -27,11 +27,19 @@ out/
 **/ios/Flutter/ephemeral/
 *.iml
 
-# Uploads and generated artefacts (floor plans, QR images)
-server/storage/uploads/*
-!server/storage/uploads/.gitkeep
-server/storage/qr/*
-!server/storage/qr/.gitkeep
+# Uploads and generated artefacts (floor plans, QR images).
+# Matches every storage layout in the repo, not just server/storage, so an
+# upload can never be committed from a duplicate or legacy directory.
+**/storage/uploads/*
+!**/storage/uploads/.gitkeep
+**/storage/qr/*
+!**/storage/qr/.gitkeep
+
+# Stray screenshots captured during manual testing (repo root only; app assets
+# under apps/*/public stay committable).
+/*.png
+/*.jpg
+/*.jpeg
 
 # Logs
 *.log

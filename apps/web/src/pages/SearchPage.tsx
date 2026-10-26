@@ -1,10 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getAllCatalogData } from "../api/catalog.ts";
 import { getGraphSnapshot } from "../api/graph.ts";
+import { getOrigin } from "../utils/session.ts";
 
 export function SearchPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Keep the scanned start point alive across this detour.
+  const origin = (location.state as any)?.origin ?? getOrigin();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +111,7 @@ export function SearchPage() {
     if (result.type === 'node') {
       navigate("/route", {
         state: {
+          origin,
           destinationNode: result.node,
           destination: result.node,
           destinationInfo: result,
@@ -115,6 +120,7 @@ export function SearchPage() {
     } else {
       navigate("/route", {
         state: {
+          origin,
           destination: result.classroom,
           destinationInfo: result,
         },
@@ -134,6 +140,24 @@ export function SearchPage() {
           </h1>
           <div className="w-12" />
         </header>
+
+        <div className="mb-4 rounded-lg border border-[#d0e4ff] bg-white px-3 py-2">
+          {origin ? (
+            <p className="text-xs text-[#40484f]">
+              <span className="text-[#707880]">From </span>
+              <span className="font-medium text-[#061d30]">
+                {origin.label || origin.code || "scanned location"}
+              </span>
+            </p>
+          ) : (
+            <button
+              onClick={() => navigate("/scan")}
+              className="text-xs text-[#006699] underline"
+            >
+              No location set — scan a QR code first
+            </button>
+          )}
+        </div>
 
         <div className="mb-4 relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#707880]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

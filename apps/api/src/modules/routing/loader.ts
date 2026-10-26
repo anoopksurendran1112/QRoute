@@ -27,6 +27,7 @@ export async function loadGraphFromDb(): Promise<RoutingGraph> {
     kind: n.kind as RoutingNode["kind"],
     code: n.code,
     label: n.label,
+    metersPerPixel: Number(n.floor.metersPerPixel),
   }));
 
   const routingEdges: RoutingEdge[] = edges.map((e) => ({

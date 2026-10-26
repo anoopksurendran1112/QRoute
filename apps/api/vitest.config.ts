@@ -7,7 +7,10 @@ export default defineConfig({
     // into the tsconfig type space.
     globals: false,
     setupFiles: ["./tests/setup.ts"],
-    include: ["tests/**/*.test.ts"],
+    // `src/**/__tests__` holds the pure unit tests (pathfinding, heap) that need
+    // no database. They were excluded by the old `tests/**` glob, which is how
+    // a routing regression that broke every route reached a running demo.
+    include: ["tests/**/*.test.ts", "src/**/__tests__/**/*.test.ts"],
     // Every suite shares one MySQL database; parallel files would race on
     // cleanup and on the seeded campus.
     fileParallelism: false,
